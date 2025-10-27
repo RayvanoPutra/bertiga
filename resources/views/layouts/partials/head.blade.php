@@ -10,3 +10,5 @@
 <link id="pagestyle" href="{{ asset('assets/css/argon-dashboard.css') }}" rel="stylesheet" />
 {{-- cdn --}}
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
+{{-- alert --}}
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>

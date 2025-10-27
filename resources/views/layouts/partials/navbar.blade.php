@@ -25,6 +25,10 @@
                   <span class="d-sm-inline d-none">Logout</span>
               </a>
           </li>
+          {{-- logout --}}
+          <form id="logout-form" method="POST" action="{{ route('logout')}}" style="display: none;">
+            @csrf
+            </form>
           <li class="nav-item d-xl-none ps-3 d-flex align-items-center">
             <a href="javascript:;" class="nav-link text-white p-0" id="iconNavbarSidenav">
               <div class="sidenav-toggler-inner">

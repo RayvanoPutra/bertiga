@@ -106,4 +106,55 @@
   {{-- table nasabah_admin --}}
   <script src="{{ asset('assets/js/plugins/chartjs.min.js') }}"></script>
 
+{{-- random norek --}}
+<script>
+  // generateRandomSuffix: menghasilkan n digit angka acak
+  function generateRandomSuffix(digits = 4) {
+    return Math.floor(Math.random() * Math.pow(10, digits)).toString().padStart(digits, '0');
+  }
+
+  // format rekening: contoh BR + tahun + - + NIS + - + 4digit
+  function formatRekening(nis) {
+    const year = new Date().getFullYear();
+    const suffix = generateRandomSuffix(4);
+    // contoh: BR2025-123456-0456
+    return `BR${year}-${nis}-${suffix}`;
+  }
+
+  // bila NIS berubah, update rekening otomatis
+  document.getElementById('nis').addEventListener('input', function() {
+    const nis = this.value.trim();
+    if (nis.length > 0) {
+      document.getElementById('rekening').value = formatRekening(nis);
+    } else {
+      document.getElementById('rekening').value = '';
+    }
+  });
+
+  // tombol regenerate
+  document.getElementById('regenRek').addEventListener('click', function() {
+    const nis = document.getElementById('nis').value.trim();
+    if (!nis) {
+      alert('Masukkan NIS terlebih dahulu.');
+      return;
+    }
+    document.getElementById('rekening').value = formatRekening(nis);
+  });
+
+  // Optional: generate saat modal terbuka (jika form di modal)
+  var tambahModal = document.getElementById('tambahNasabahModal');
+  if (tambahModal) {
+    tambahModal.addEventListener('show.bs.modal', function () {
+      const nisField = document.getElementById('nis');
+      if (nisField && nisField.value.trim() !== '') {
+        document.getElementById('rekening').value = formatRekening(nisField.value.trim());
+      } else {
+        document.getElementById('rekening').value = '';
+      }
+    });
+  }
+</script>
+
+
+
   

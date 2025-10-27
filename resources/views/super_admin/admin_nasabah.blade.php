@@ -12,11 +12,9 @@
 </style>
 
 <body class="g-sidenav-show   bg-gray-100">
-  <div class="min-height-300 bg-dark position-absolute w-100"></div>
-
   @include('layouts.partials.sidebar')
 
-  <main class="main-content position-relative border-radius-lg ">
+  <main class="main-content position-relative border-radius-lg">
     <!-- Navbar -->
     @include('layouts.partials.navbar')
     <!-- End Navbar -->
@@ -42,56 +40,122 @@
                     <i class="bi bi-person-fill-add fs-5 me-1"></i> Tambah Nasabah
                   </a>
 
-                <div class="modal fade" id="tambahNasabahModal" tabindex="-1" aria-labelledby="tambahNasabahLabel" aria-hidden="true">
-                  <div class="modal-dialog modal-dialog-centered">
-                    <div class="modal-content border-0 shadow-lg">
-                      <div class="modal-header bg-gradient-primary text-white">
-                        <h5 class="modal-title" id="tambahNasabahLabel">
-                          <i class="bi bi-person-plus-fill me-2"></i>Tambah Nasabah
-                        </h5>
-                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                      </div>
-                
-                      <div class="modal-body">
-                        <form>
-                          <div class="mb-3">
-                            <label class="form-label fw-bold">Nama Nasabah</label>
-                            <input type="text" class="form-control" placeholder="Masukkan nama nasabah">
-                          </div>
-                          <div class="mb-3">
-                            <label class="form-label fw-bold">Jenis Rekening</label>
-                            <select class="form-select">
-                              <option value="">-- Pilih Jenis Rekening --</option>
-                              <option value="tabungan">Tabungan</option>
-                              <option value="deposito">Deposito</option>
-                            </select>
-                          </div>
-                          <div class="mb-3">
-                            <label class="form-label fw-bold">Jurusan</label>
-                            <input type="text" class="form-control" placeholder="Masukkan jurusan">
-                          </div>
-                          <div class="mb-3">
-                            <label class="form-label fw-bold">Kelas</label>
-                            <input type="text" class="form-control" placeholder="Masukkan kelas">
-                          </div>
-                          <div class="mb-3">
-                            <label class="form-label fw-bold">Status Nasabah</label>
-                            <select class="form-select">
-                              <option value="">-- Pilih Status --</option>
-                              <option value="aktif">Aktif</option>
-                              <option value="pasif">Pasif</option>
-                            </select>
-                          </div>
-                
-                          <div class="d-flex justify-content-end">
-                            <button type="button" class="btn bg-gradient-secondary me-2" data-bs-dismiss="modal">Batal</button>
-                            <button type="button" class="btn bg-gradient-primary text-white">Simpan</button>
-                          </div>
-                        </form>
+                  <div class="modal fade" id="tambahNasabahModal" tabindex="-1" aria-labelledby="tambahNasabahLabel" aria-hidden="true">
+                    <div class="modal-dialog modal-xl modal-dialog-centered"> <!-- ubah ke modal-xl agar lebih lebar -->
+                      <div class="modal-content border-0 shadow-lg">
+                        <div class="modal-header bg-gradient-primary text-white">
+                          <h5 class="modal-title" id="tambahNasabahLabel">
+                            <i class="bi bi-person-plus-fill me-2"></i>Tambah Nasabah
+                          </h5>
+                          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                  
+                        <div class="modal-body">
+                          <form>
+                            <div class="row g-3">
+                              <!-- Kolom Kiri -->
+                              <div class="col-md-6">
+                                <div class="mb-3">
+                                  <label class="form-label fw-bold">NIS</label>
+                                  <input id="nis" name="nis" type="text" class="form-control" placeholder="Masukkan NIS siswa">
+                                </div>
+                  
+                                <div class="mb-3">
+                                  <label class="form-label fw-bold">Nomor Rekening</label>
+                                  <div class="input-group">
+                                    <input id="rekening" name="rekening" type="text" class="form-control" style="height: 42px;" placeholder="Nomor rekening otomatis" readonly>
+                                    <button id="regenRek" class="btn btn-outline-secondary" type="button" title="Regenerate">⟳</button>
+                                  </div>
+                                </div>
+                  
+                                <div class="mb-3">
+                                  <label class="form-label fw-bold">Nama Nasabah</label>
+                                  <input type="text" class="form-control" placeholder="Masukkan nama nasabah">
+                                </div>
+
+                                <div class="mb-3">
+                                  <label class="form-label fw-bold">Nomor Telephone</label>
+                                  <input type="text" class="form-control" placeholder="Masukkan nama nasabah">
+                                </div>
+
+                                <div class="mb-3">
+                                  <label class="form-label fw-bold">Tempat / Tanggal Lahir</label>
+                                  <div class="row g-2">
+                                    <div class="col-md-6">
+                                      <input type="text" class="form-control" placeholder="Tempat lahir">
+                                    </div>
+                                    <div class="col-md-6">
+                                      <input type="date" class="form-control">
+                                    </div>
+                                  </div>
+                                </div>
+                                <div class="mb-3">
+                                  <label class="form-label fw-bold">Alamat</label>
+                                  <textarea class="form-control" rows="3" placeholder="Masukkan alamat"></textarea>
+                                </div>
+                              </div>                  
+                              <!-- Kolom Kanan -->
+                              <div class="col-md-6">
+                                <div class="mb-3">
+                                  <label class="form-label fw-bold">Jenis Kelamin</label>
+                                  <select class="form-select">
+                                    <option value="">-- Pilih Jenis Kelamin --</option>
+                                    <option value="Laki-laki">Laki-laki</option>
+                                    <option value="Perempuan">Perempuan</option>
+                                  </select>
+                                </div>
+                  
+                                <div class="mb-3">
+                                  <label class="form-label fw-bold">Jenis Rekening</label>
+                                  <select class="form-select">
+                                    <option value="">-- Pilih Jenis Rekening --</option>
+                                    <option value="Guru">Guru</option>
+                                    <option value="Siswa">Siswa</option>
+                                  </select>
+                                </div>
+                  
+                                <div class="mb-3">
+                                  <label class="form-label fw-bold">Kelas</label>
+                                  <select class="form-select">
+                                    <option value="">-- Pilih Kelas --</option>
+                                    <option>AKL1</option>
+                                    <option>AKL2</option>
+                                    <option>AKL3</option>
+                                  </select>
+                                </div>
+                  
+                                <div class="mb-3">
+                                  <label class="form-label fw-bold">Jurusan</label>
+                                  <select class="form-select">
+                                    <option value="">-- Pilih Jurusan --</option>
+                                    <option>Akuntansi</option>
+                                    <option>Teknik Komputer & Jaringan</option>
+                                    <option>Manajemen Perkantoran</option>
+                                  </select>
+                                </div>
+                  
+                                <div class="mb-3">
+                                  <label class="form-label fw-bold">Username</label>
+                                  <input type="text" class="form-control" placeholder="Masukkan username">
+                                </div>
+                  
+                                <div class="mb-3">
+                                  <label class="form-label fw-bold">Password</label>
+                                  <input type="password" class="form-control" placeholder="Masukkan password">
+                                </div>
+                              </div>
+                            </div>
+                  
+                            <div class="d-flex justify-content-end mt-3">
+                              <button type="button" class="btn bg-gradient-secondary me-2" data-bs-dismiss="modal">Batal</button>
+                              <button type="button" id="btnSimpan" class="btn bg-gradient-primary text-white">Simpan</button>
+                            </div>
+                          </form>
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
+                  
               </div>
             </div>
             
@@ -188,7 +252,7 @@
                         <a href="javascript:;" class="btn btn-sm btn-primary me-1" data-bs-toggle="tooltip" title="Edit user">
                           <i class="fas fa-edit me-1"></i> Edit
                         </a>
-                        <a href="javascript:;" class="btn btn-sm btn-success" data-bs-toggle="tooltip" title="Lihat detail">
+                        <a href="{{ route('super_admin.detil_nasabah') }}" class="btn btn-sm btn-success" data-bs-toggle="tooltip" title="Lihat detail">
                           <i class="fas fa-eye me-1"></i> Lihat
                         </a>
                       </td>                      
@@ -395,11 +459,6 @@
   <form id="logout-form" method="POST" action="{{ route('logout') }}" style="display: none;">
     @csrf
     </form>
-
-    <a class="btn btn-sm bg-gradient-success text-white" data-bs-toggle="collapse" href="#formTambah" role="button">
-      <i class="bi bi-person-fill-add fs-5"></i> Tambah Nasabah
-    </a>
-    
     <div class="collapse mt-3" id="formTambah">
       <div class="card card-body">
         <form>
@@ -414,5 +473,5 @@
     
 
 </body>
-
+@include('layouts.partials.script')
 </html>

@@ -127,10 +127,6 @@
   </main>
   <!--   Core JS Files   -->
   @include('layouts.partials.script')
-  {{-- logout --}}
-  <form id="logout-form" method="POST" action="{{ route('logout') }}" style="display: none;">
-    @csrf
-    </form>
 </body>
 
 </html>

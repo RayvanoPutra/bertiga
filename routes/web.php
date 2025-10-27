@@ -33,16 +33,17 @@ Route::middleware(['auth'])->group(function (){
         Route::get('/admin/dashboard', [DashboardController::class, 'adminIndex'])->name('admin.dashboard');
     });
     
-    Route::post('/logout', [LoginController::class, 'logout'])->name('logout'); 
+    
 });
 
+Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
+                                                                                            
 // route admin_nasabah
 route::get('/super_admin/admin_nasabah', function() {
     return view('super_admin.admin_nasabah');
 })->name('super_admin.admin_nasabah');
 
-
-
-Route::get('/', function () {
-    return view('welcome');
-});
+// detil nasabah
+route::get('/super_admin/detil_nasabah', function() {
+    return view('super_admin.detil_nasabah');
+})->name('super_admin.detil_nasabah');
