@@ -40,6 +40,16 @@ return [
             'driver' => 'session',
             'provider' => 'users',
         ],
+
+        'petugas' => [
+            'driver' => 'sanctum',
+            'provider' => 'petugas',
+        ],
+
+        'nasabah' => [
+            'driver' => 'sanctum',
+            'provider' => 'nasabah',
+        ],
     ],
 
     /*
@@ -63,6 +73,16 @@ return [
         'users' => [
             'driver' => 'eloquent',
             'model' => env('AUTH_MODEL', App\Models\User::class),
+        ],
+
+        'petugas' => [
+            'driver' => 'eloquent',
+            'model' => App\Models\Petugas::class,
+        ],
+        
+        'nasabah' => [
+            'driver' => 'eloquent',
+            'model' => App\Models\Nasabah::class,
         ],
 
         // 'users' => [
