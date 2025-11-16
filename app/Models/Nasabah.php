@@ -41,4 +41,9 @@ class Nasabah extends Authenticatable
             'no_rekening'     //kolom PK di tabel nasabah
         );
     }
+
+    public function transaksi()
+    {
+        return $this->hasMany(Transaksi::class, 'no_rekening', 'no_rekening');
+    }
 }

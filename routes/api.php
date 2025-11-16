@@ -30,6 +30,8 @@ Route::middleware('auth:sanctum')->group(function () {
 
     //rute nasabah
     Route::post('/nasabah', [NasabahController::class, 'storeNasabah']);
+    Route::post('/nasabah/bulk-update-status', [NasabahController::class, 'bulkUpdateStatus']);
+    Route::delete('/nasabah/{no_rekening}', [NasabahController::class, 'deleteNasabah']);
 
     Route::prefix('transaksi')->group(function () {
 
