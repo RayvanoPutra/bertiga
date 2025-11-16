@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\MasterDataController;
 use App\Http\Controllers\Api\NasabahController;
+use App\Http\Controllers\Api\TransaksiController;
 
 /*
 | Rute API
@@ -26,8 +27,22 @@ Route::middleware('auth:sanctum')->group(function () {
         return $request->user();
     });
 
+
     //rute nasabah
     Route::post('/nasabah', [NasabahController::class, 'storeNasabah']);
+
+    Route::prefix('transaksi')->group(function () {
+
+        // Rute untuk Nasabah (Android)
+        Route::post('/request-setor', [TransaksiController::class, 'requestSetor']);
+        Route::post('/request-tarik', [TransaksiController::class, 'requestTarik']);
+        Route::get('/history', [TransaksiController::class, 'getHistoryNasabah']);
+
+        // Rute untuk Petugas (Web Admin)
+        Route::get('/pending', [TransaksiController::class, 'getPending']);
+        Route::post('/approve/{id}', [TransaksiController::class, 'approve']);
+        Route::post('/reject/{id}', [TransaksiController::class, 'reject']);
+    });
 
     //rute master utk superadmin
     Route::prefix('master')->group(function () {
