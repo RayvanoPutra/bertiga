@@ -43,7 +43,8 @@ class AuthController extends Controller
         ]);
     }
 
-    public function loginNasabah (Request $request) {
+    public function loginNasabah(Request $request)
+    {
         //validasi input
         $request->validate([
             'username' => 'required|string',
@@ -57,6 +58,13 @@ class AuthController extends Controller
         if (! $nasabah || ! Hash::check($request->password, $nasabah->password)) {
             throw ValidationException::withMessages([
                 'username' => ['Kredensial yang diberikan salah.'],
+            ]);
+        }
+
+        //cek status nasabah
+        if ($nasabah->status != 'aktif') {
+            throw ValidationException::withMessages([
+                'username' => ['Akun ini sudah tidak aktif (status: ' . $nasabah->status . ').'],
             ]);
         }
 
