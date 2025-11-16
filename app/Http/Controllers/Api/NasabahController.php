@@ -20,17 +20,14 @@ class NasabahController extends Controller
     public function storeNasabah(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            //informasi login
             'username' => 'required|string|unique:nasabah,username',
             'password' => 'required|string|min:6',
-            //informasi diri
             'nama' => 'required|string',
             'no_induk' => 'required|string|unique:nasabah,no_induk',
             'jenis_rekening' => 'required|in:siswa,guru',
             'email' => 'nullable|email',
             'no_telp' => 'nullable|string',
             'alamat' => 'nullable|string',
-            //info kelas (jika siswa)
             'kelas_id' => 'nullable|required_if:jenis_rekening,siswa|exists:kelas,id',
             'saldo_awal' => 'required|integer|min:0',
         ]);
@@ -45,7 +42,10 @@ class NasabahController extends Controller
         if ($request->jenis_rekening == 'siswa') {
             //mengambil data kelas dan jurusan dr relasi utk data historis
             $kelas = Kelas::with('jurusan')->find($request->kelas_id);
-            $jurusan = $kelas->jurusan;
+            //make sure kelas ada di jurusan
+            if ($kelas) { 
+                $jurusan = $kelas->jurusan;
+            }
         }
 
         //mengambil id jenis utk saldo awal
@@ -70,15 +70,14 @@ class NasabahController extends Controller
                     'email' => $request->email,
                     'no_telp' => $request->no_telp,
                     'alamat' => $request->alamat,
-                    'kelas_id' => $request->kelas_id, //teteo NULL jika guru
+                    'kelas_id' => $request->kelas_id, //null kl guru
                     'saldo' => $request->saldo_awal, //saldo 'live' diisi
                 ]);
-
-                // --- AKSI 2: Buat Transaksi "Saldo Awal" (Snapshot) ---
+                // buat transaksi saldo awal
                 Transaksi::create([
                     // Data Hubungan
                     'no_rekening' => $nasabah->no_rekening,
-                    'petugas_id' => $request->user()->id, // Diisi ID petugas yg sedang login
+                    'petugas_id' => $request->user()->id, //id petugas yg sedang login
                     'jenis_transaksi_id' => $jenisSaldoAwal->id,
 
                     // Data Transaksi
