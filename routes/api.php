@@ -22,7 +22,7 @@ Route::middleware('auth:sanctum')->group(function () {
     //route logout
     Route::post('/logout', [AuthController::class, 'logout']);
 
-    // Rute tes untuk mengecek token (mengembalikan data user yang sedang login)
+    //rute tes untuk mengecek token (mengembalikan data user yang sedang login)
     Route::get('/user', function (Request $request) {
         return $request->user();
     });
@@ -40,7 +40,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/request-tarik', [TransaksiController::class, 'requestTarik']);
         Route::get('/history', [TransaksiController::class, 'getHistoryNasabah']);
 
-        // Rute untuk Petugas (Web Admin)
+        // rute untuk Petugas (Web Admin)
         Route::get('/pending', [TransaksiController::class, 'getPending']);
         Route::post('/approve/{id}', [TransaksiController::class, 'approve']);
         Route::post('/reject/{id}', [TransaksiController::class, 'reject']);
