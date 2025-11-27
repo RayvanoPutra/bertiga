@@ -1,0 +1,37 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!--
+        TEMA UTAMA APLIKASI (MODE SIANG)
+        Ini memberitahu semua komponen (Button, Input)
+        untuk menggunakan palet warna biru kita.
+    -->
+    <style name="AppTheme" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+
+        <!-- Warna Utama (Mengganti warna ungu) -->
+        <item name="colorPrimary">@color/blue_primary</item>
+        <item name="colorPrimaryVariant">@color/blue_primary_dark</item>
+        <item name="colorOnPrimary">@color/white</item>
+
+        <!-- Warna Sekunder (bisa dipakai untuk hal lain) -->
+        <item name="colorSecondary">@color/blue_gradient_start</item>
+        <item name="colorSecondaryVariant">@color/blue_primary</item>
+        <item name="colorOnSecondary">@color/black</item>
+
+        <!-- Warna Latar Belakang -->
+        <item name="android:colorBackground">@color/white</item>
+        <item name="colorSurface">@color/white</item>
+
+        <!-- Warna Status Bar (di atas) -->
+        <item name="android:statusBarColor" tools:targetApi="l">@color/blue_primary_dark</item>
+
+        <!-- Ini akan membuat border input box Anda berwarna biru -->
+        <item name="textInputStyle">@style/AppTheme.TextInputLayout</item>
+    </style>
+
+    <!-- Style kustom untuk Input Box -->
+    <style name="AppTheme.TextInputLayout" parent="Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+        <!-- Warna border saat fokus (diklik) -->
+        <item name="boxStrokeColor">@color/blue_primary</item>
+        <!-- Warna hint (label) saat fokus (diklik) -->
+        <item name="hintTextColor">@color/blue_primary</item>
+    </style>
+</resources>

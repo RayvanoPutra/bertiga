@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/blue_accent_light"
+    tools:context=".ui.history.HistoryActivity">
+
+    <!-- Toolbar (Tidak berubah) -->
+    <com.google.android.material.appbar.MaterialToolbar
+        android:id="@+id/toolbarHistory"
+        android:layout_width="match_parent"
+        android:layout_height="?attr/actionBarSize"
+        android:background="@color/white"
+        app:layout_constraintTop_toTopOf="parent"
+        app:title="Riwayat Transaksi"
+        app:navigationIcon="@drawable/ic_arrow_back" />
+
+    <!--
+      KOTAK FILTER KUSTOM (BARU)
+    -->
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/filterCard"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="12dp"
+        app:cardCornerRadius="8dp"
+        app:cardElevation="2dp"
+        app:layout_constraintTop_toBottomOf="@id/toolbarHistory">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <!-- Filter Jenis Transaksi (Dropdown) -->
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/menuJenisTransaksi"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Jenis Transaksi">
+
+                <AutoCompleteTextView
+                    android:id="@+id/autoCompleteJenis"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="none"
+                    android:text="Semua" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <!-- Filter Tanggal (Dari & Sampai) -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="12dp"
+                android:baselineAligned="false">
+
+                <!-- Dari Tanggal -->
+                <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/layoutDariTanggal"
+                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginEnd="8dp"
+                    android:hint="Dari Tanggal">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/inputDariTanggal"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:focusable="false"
+                        android:clickable="true"
+                        android:inputType="none" />
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <!-- Sampai Tanggal -->
+                <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/layoutSampaiTanggal"
+                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginStart="8dp"
+                    android:hint="Sampai Tanggal">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/inputSampaiTanggal"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:focusable="false"
+                        android:clickable="true"
+                        android:inputType="none" />
+                </com.google.android.material.textfield.TextInputLayout>
+            </LinearLayout>
+
+            <!-- Tombol Cari -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/buttonCari"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Cari Riwayat"
+                android:paddingVertical="12dp"
+                android:layout_marginTop="16dp"
+                app:backgroundTint="@color/blue_primary" />
+
+        </LinearLayout>
+    </com.google.android.material.card.MaterialCardView>
+
+
+    <!-- Garis Pemisah -->
+    <TextView
+        android:id="@+id/dividerText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Hasil Pencarian"
+        android:textStyle="bold"
+        android:textColor="@color/text_primary"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="16dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/filterCard"/>
+
+    <!-- Daftar (RecyclerView) -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recyclerHistory"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_marginTop="8dp"
+        app:layout_constraintTop_toBottomOf="@id/dividerText"
+        app:layout_constraintBottom_toBottomOf="parent"
+        tools:listitem="@layout/item_transaksi" />
+
+    <!-- Tampilan Loading (Tidak berubah) -->
+    <ProgressBar
+        android:id="@+id/progressHistory"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:visibility="gone"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent" />
+
+    <!-- Tampilan Jika Data Kosong (Tidak berubah) -->
+    <TextView
+        android:id="@+id/textNoData"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Tidak ada riwayat transaksi."
+        android:textSize="16sp"
+        android:textColor="@color/text_secondary"
+        android:visibility="gone"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

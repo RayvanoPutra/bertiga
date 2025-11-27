@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:padding="16dp"
+    android:background="@color/white">
+
+    <!-- Status (PEND) -->
+    <TextView
+        android:id="@+id/itemStatus"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="PEND"
+        android:textColor="@color/text_secondary"
+        android:textSize="12sp"
+        android:textStyle="bold"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <!-- Jumlah (Rp 3.000) -->
+    <TextView
+        android:id="@+id/itemJumlah"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Rp 3.000,00"
+        android:textColor="@android:color/holo_red_dark"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <!-- Tanggal (TGL: 1117...) -->
+    <TextView
+        android:id="@+id/itemTanggal"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:text="TGL: 17 Nov 2025, 14:17"
+        android:textColor="@color/text_primary"
+        android:textSize="14sp"
+        app:layout_constraintEnd_toStartOf="@id/itemTipe"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/itemStatus" />
+
+    <!-- Keterangan (OES TEH SI) -->
+    <TextView
+        android:id="@+id/itemKeterangan"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:text="0000.OES TEH SI"
+        android:textColor="@color/text_primary"
+        android:textSize="14sp"
+        app:layout_constraintEnd_toStartOf="@id/itemTipe"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/itemTanggal" />
+
+    <!-- Jenis (TRANSAKSI DEBIT) -->
+    <TextView
+        android:id="@+id/itemJenis"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:text="TRANSAKSI DEBIT"
+        android:textColor="@color/text_primary"
+        android:textSize="14sp"
+        app:layout_constraintEnd_toStartOf="@id/itemTipe"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/itemKeterangan" />
+
+    <!-- Tipe (DB / CR) -->
+    <TextView
+        android:id="@+id/itemTipe"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="DB"
+        android:textColor="@android:color/holo_red_dark"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        app:layout_constraintBottom_toBottomOf="@id/itemJenis"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="@id/itemTanggal" />
+
+    <!-- Garis Pemisah Bawah -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_marginTop="16dp"
+        android:background="@color/divider_light"
+        app:layout_constraintTop_toBottomOf="@id/itemJenis" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>
