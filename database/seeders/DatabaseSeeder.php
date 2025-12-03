@@ -20,6 +20,7 @@ class DatabaseSeeder extends Seeder
             TahunAjaranSeeder::class,
             JenisTransaksiSeeder::class,
             PetugasSeeder::class,
+            KelasSeeder::class,
         ]);
 
         // User::factory()->create([

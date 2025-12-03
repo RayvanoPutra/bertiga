@@ -13,14 +13,16 @@ class TahunAjaranSeeder extends Seeder
      */
     public function run(): void
     {
-        TahunAjaran::updateOrCreate(
-            ['tahun_ajaran' => '2024/2025'],
-            ['status' => 'aktif']
-        );
+        TahunAjaran::create([
+            'kode_tahun_ajaran' => 'TA-2425',
+            'tahun_ajaran' => '2024/2025', 
+            'status' => 'aktif'
+        ]);
 
-        TahunAjaran::updateOrCreate(
-            ['tahun_ajaran' => '2025/2026'],
-            ['status' => 'aktif']
-        );
+        TahunAjaran::create([
+            'kode_tahun_ajaran' => 'TA-2324',
+            'tahun_ajaran' => '2023/2024',
+            'status' => 'nonaktif'
+        ]);
     }
 }

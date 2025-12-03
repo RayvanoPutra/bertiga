@@ -12,13 +12,25 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('kelas', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('tahun_ajaran_id')->constrained('tahun_ajaran')
-                ->onDelete('cascade');
-            $table->string('kode_jurusan');
-            $table->foreign('kode_jurusan')->references('kode_jurusan')->on('jurusan')
-                ->onDelete('cascade');
+            //Format: X-RPL-1-2425 (Kelas 10 RPL 1 Tahun Ajaran 2024/2025)
+            $table->string('kode_kelas')->primary();
             $table->string('nama_kelas');
+
+            $table->string('kode_tahun_ajaran');
+            $table->string('kode_jurusan');
+
+            // Relasi Tahun Ajaran
+            $table->foreign('kode_tahun_ajaran')
+                ->references('kode_tahun_ajaran') 
+                ->on('tahun_ajaran')            
+                ->onDelete('cascade');
+
+            // Relasi jurusan
+            $table->foreign('kode_jurusan')
+                ->references('kode_jurusan')    
+                ->on('jurusan')                 
+                ->onDelete('cascade');
+
             $table->timestamps();
         });
     }

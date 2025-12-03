@@ -10,7 +10,10 @@ class JenisTransaksi extends Model
     use HasFactory;
 
     protected $table = 'jenis_transaksi';
-    protected $fillable = ['nama_jenis'];
+    protected $primaryKey = 'kode_jenis';
+    public $incrementing = false;
+    protected $keyType = 'string';
+    protected $guarded = [];
     public function transaksi()
     {
         return $this->hasMany(Transaksi::class);

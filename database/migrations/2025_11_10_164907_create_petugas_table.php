@@ -12,10 +12,10 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('petugas', function (Blueprint $table) {
-            $table->id();
+            $table->string('kode_petugas')->primary();
             $table->string('nama_petugas');
             $table->string('username')->unique();
-            $table->string('password'); // Akan diHash
+            $table->string('password');
             $table->enum('role', ['superadmin', 'admin']);
             $table->timestamps();
         });

@@ -164,6 +164,7 @@ class TransaksiController extends Controller
         $transaksi->update([
             'status' => 'rejected',
             'petugas_id' => $request->user()->id, // Petugas yg menolak
+            'tgl_transaksi' => now(),
         ]);
 
         return response()->json(['message' => 'Transaksi berhasil ditolak.']);

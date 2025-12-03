@@ -14,22 +14,20 @@ class PetugasSeeder extends Seeder
      */
     public function run(): void
     {
-        Petugas::updateOrCreate(
-            ['username' => 'superadmin'], // Kunci unik untuk dicek
-            [
-                'nama_petugas' => 'Super Admin',
-                'password' => Hash::make('password'), // Password-nya adalah 'password'
-                'role' => 'superadmin'
-            ]
-        );
+        Petugas::create([
+            'kode_petugas' => 'SADM001',
+            'nama_petugas' => 'superadmin',
+            'username' => 'admin',
+            'password' => Hash::make('password'), // Password: password
+            'role' => 'superadmin'
+        ]);
 
-        Petugas::updateOrCreate(
-            ['username' => 'admin'], // Kunci unik untuk dicek
-            [
-                'nama_petugas' => 'Admin Biasa',
-                'password' => Hash::make('password'), // Password-nya adalah 'password'
-                'role' => 'admin'
-            ]
-        );
+        Petugas::create([
+            'kode_petugas' => 'ADM001',
+            'nama_petugas' => 'admin',
+            'username' => 'petugas',
+            'password' => Hash::make('password'),
+            'role' => 'admin'
+        ]);
     }
 }

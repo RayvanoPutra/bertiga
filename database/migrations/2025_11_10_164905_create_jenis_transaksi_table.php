@@ -12,8 +12,9 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('jenis_transaksi', function (Blueprint $table) {
-            $table->id();
-            $table->string('nama_jenis')->unique();
+            // Format Primary Key: SETOR 
+            $table->string('kode_jenis')->primary();
+            $table->string('nama_jenis');
             $table->timestamps();
         });
     }
