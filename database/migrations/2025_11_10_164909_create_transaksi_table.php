@@ -13,25 +13,26 @@ return new class extends Migration
     {
         Schema::create('transaksi', function (Blueprint $table) {
             // Format: TR-20250921-0001
-            $table->string('kode_transaksi')->primary();
+            $table->string('kode_transaksi', 50)->primary();
             // Relasi Nasabah
-            $table->string('no_rekening');
+            $table->string('no_rekening', 20);
             $table->foreign('no_rekening')->references('no_rekening')->on('nasabah')
                 ->onDelete('cascade');
             // Relasi Petugas
-            $table->string('kode_petugas')->nullable();
+            $table->string('kode_petugas', 20)->nullable();
             $table->foreign('kode_petugas')->references('kode_petugas')->on('petugas');
             // Relasi Jenis Transaksi
-            $table->string('kode_jenis');
+            $table->string('kode_jenis', 10);
             $table->foreign('kode_jenis')->references('kode_jenis')->on('jenis_transaksi');
-            
+
             //Data Transaksi
             $table->timestamp('tgl_transaksi')->nullable();
             $table->bigInteger('jumlah');
 
             // Alur 
-            $table->enum('status', ['pending', 'approved', 'rejected'])->default('pending');
+            $table->enum('status', ['pending', 'success', 'rejected'])->default('pending');
             $table->text('keterangan_nasabah')->nullable();
+            $table->timestamps();
         });
     }
 

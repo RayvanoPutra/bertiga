@@ -13,11 +13,11 @@ return new class extends Migration
     {
         Schema::create('kelas', function (Blueprint $table) {
             //Format: X-RPL-1-2425 (Kelas 10 RPL 1 Tahun Ajaran 2024/2025)
-            $table->string('kode_kelas')->primary();
-            $table->string('nama_kelas');
+            $table->string('kode_kelas', 20)->primary();
+            $table->string('nama_kelas', 50);
 
-            $table->string('kode_tahun_ajaran');
-            $table->string('kode_jurusan');
+            $table->string('kode_tahun_ajaran', 10);
+            $table->string('kode_jurusan', 8);
 
             // Relasi Tahun Ajaran
             $table->foreign('kode_tahun_ajaran')

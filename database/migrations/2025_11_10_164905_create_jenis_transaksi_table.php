@@ -13,8 +13,8 @@ return new class extends Migration
     {
         Schema::create('jenis_transaksi', function (Blueprint $table) {
             // Format Primary Key: SETOR 
-            $table->string('kode_jenis')->primary();
-            $table->string('nama_jenis');
+            $table->string('kode_jenis', 10)->primary();
+            $table->string('nama_jenis', 50);
             $table->timestamps();
         });
     }

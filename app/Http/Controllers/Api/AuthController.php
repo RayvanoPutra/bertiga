@@ -8,6 +8,7 @@ use App\Models\Nasabah;
 use App\Models\Petugas;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Facades\Validator;
 
 
 class AuthController extends Controller
@@ -15,30 +16,32 @@ class AuthController extends Controller
     public function loginPetugas(Request $request)
     {
         //validasi input
-        $request->validate([
-            'username' => 'required|string',
-            'password' => 'required|string',
+        $validator = Validator::make($request->all(), [
+            'username' => 'required',
+            'password' => 'required',
         ]);
 
+        if ($validator->fails()) {
+            return response()->json($validator->errors(), 422);
+        }
         //find by username
         $petugas = Petugas::where('username', $request->username)->first();
 
         // validasi petugas ada atau tidak dan cek password
         if (! $petugas || ! Hash::check($request->password, $petugas->password)) {
-            // Jika ya, kirim error "Kredensial salah"
-            throw ValidationException::withMessages([
-                'username' => ['Kredensial yang diberikan salah.'],
-            ]);
+            return response()->json([
+                'message' => 'Username dan Password salah.'
+            ], 401);
         }
 
-        //klo berhasil dapat kartu akses/token dgn nama 'auth_token_petugas'
-        $token = $petugas->createToken('auth_token_petugas')->plainTextToken;
+        //klo berhasil dapat kartu akses/token dgn nama 'token-petugas'
+        $token = $petugas->createToken('token-petugas')->plainTextToken;
 
         //kirim respon json kl berhasil
         return response()->json([
             'message' => 'Login berhasil',
             'access_token' => $token,
-            'token_type' => 'Bearer',
+            'role' => $petugas->role,
             'user' => $petugas
         ]);
     }
@@ -46,19 +49,23 @@ class AuthController extends Controller
     public function loginNasabah(Request $request)
     {
         //validasi input
-        $request->validate([
-            'username' => 'required|string',
-            'password' => 'required|string',
+        $validator = Validator::make($request->all(), [
+            'username' => 'required',
+            'password' => 'required',
         ]);
+
+        if ($validator->fails()) {
+            return response()->json($validator->errors(), 422);
+        }
 
         //find by username
         $nasabah = Nasabah::where('username', $request->username)->first();
 
         //cek nasabah ada atau tidak dan cek password
         if (! $nasabah || ! Hash::check($request->password, $nasabah->password)) {
-            throw ValidationException::withMessages([
-                'username' => ['Kredensial yang diberikan salah.'],
-            ]);
+            return response()->json([
+                'message' => 'Username atau Password salah.'
+            ], 401);
         }
 
         //cek status nasabah
@@ -69,14 +76,13 @@ class AuthController extends Controller
         }
 
         //klo berhasil dapat akses/token'
-        $token = $nasabah->createToken('auth_token_nasabah')->plainTextToken;
+        $token = $nasabah->createToken('token-nasabah')->plainTextToken;
 
         //kirim respon json kl berhasil
         return response()->json([
-            'message' => 'Login berhasil',
-            'access_token' => $token,
-            'token_type' => 'Bearer',
-            'user' => $nasabah
+            'message' => 'Login Berhasil',
+            'token' => $token,
+            'data' => $nasabah
         ]);
     }
 
@@ -86,6 +92,6 @@ class AuthController extends Controller
         $request->user()->currentAccessToken()->delete();
 
         // respon json
-        return response()->json(['message' => 'Logout berhasil']);
+        return response()->json(['message' => 'Logout Berhasil']);
     }
 }

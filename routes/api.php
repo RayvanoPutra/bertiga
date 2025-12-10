@@ -36,11 +36,13 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::prefix('transaksi')->group(function () {
 
         // Rute untuk Nasabah (Android)
-        Route::post('/request-setor', [TransaksiController::class, 'requestSetor']);
-        Route::post('/request-tarik', [TransaksiController::class, 'requestTarik']);
+        Route::post('/request', [TransaksiController::class, 'requestTransaksi']);
+        Route::get('/history', [TransaksiController::class, 'getHistoryNasabah']);
+        // Route::post('/request-tarik', [TransaksiController::class, 'requestTarik']);
         Route::get('/history', [TransaksiController::class, 'getHistoryNasabah']);
 
         // rute untuk Petugas (Web Admin)
+        Route::get('/history-admin', [TransaksiController::class, 'getHistoryAdmin']);
         Route::get('/pending', [TransaksiController::class, 'getPending']);
         Route::post('/approve/{id}', [TransaksiController::class, 'approve']);
         Route::post('/reject/{id}', [TransaksiController::class, 'reject']);
@@ -49,23 +51,27 @@ Route::middleware('auth:sanctum')->group(function () {
     //rute master utk superadmin
     Route::prefix('master')->group(function () {
 
+        // === NASABAH ===
+        Route::get('/nasabah', [NasabahController::class, 'index']);
+        Route::post('/nasabah', [NasabahController::class, 'store']);
+
         //route jurusan crud
         Route::get('/jurusan', [MasterDataController::class, 'getJurusan']);
         Route::post('/jurusan', [MasterDataController::class, 'storeJurusan']);
-        Route::get('/jurusan/{kode_jurusan}', [MasterDataController::class, 'showJurusan']);
-        Route::put('/jurusan/{kode_jurusan}', [MasterDataController::class, 'updateJurusan']);
-        Route::delete('/jurusan/{kode_jurusan}', [MasterDataController::class, 'deleteJurusan']);
+        // Route::get('/jurusan/{kode_jurusan}', [MasterDataController::class, 'showJurusan']);
+        // Route::put('/jurusan/{kode_jurusan}', [MasterDataController::class, 'updateJurusan']);
+        // Route::delete('/jurusan/{kode_jurusan}', [MasterDataController::class, 'deleteJurusan']);
 
         //rute Tahun Ajaran crud
         Route::get('/tahun-ajaran', [MasterDataController::class, 'getTahunAjaran']);
         Route::post('/tahun-ajaran', [MasterDataController::class, 'storeTahunAjaran']);
-        Route::put('/tahun-ajaran/{id}', [MasterDataController::class, 'updateTahunAjaran']);
-        Route::delete('/tahun-ajaran/{id}', [MasterDataController::class, 'deleteTahunAjaran']);
+        // Route::put('/tahun-ajaran/{id}', [MasterDataController::class, 'updateTahunAjaran']);
+        // Route::delete('/tahun-ajaran/{id}', [MasterDataController::class, 'deleteTahunAjaran']);
 
         //rute Kelas
         Route::get('/kelas', [MasterDataController::class, 'getKelas']);
         Route::post('/kelas', [MasterDataController::class, 'storeKelas']);
-        Route::put('/kelas/{id}', [MasterDataController::class, 'updateKelas']);
-        Route::delete('/kelas/{id}', [MasterDataController::class, 'deleteKelas']);
+        // Route::put('/kelas/{id}', [MasterDataController::class, 'updateKelas']);
+        // Route::delete('/kelas/{id}', [MasterDataController::class, 'deleteKelas']);
     });
 });
