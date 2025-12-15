@@ -9,7 +9,12 @@ class Pengaturan extends Model
 {
     use HasFactory;
 
-    protected $table = 'pengaturan';
-    //kolom yang diisi
-    protected $fillable = ['nama_pengaturan', 'nilai'];
+    // Nama tabel di database
+    protected $table = 'pengaturan'; 
+
+    // Kolom-kolom yang boleh diisi (mass assignable)
+    protected $fillable = [
+        'nama_pengaturan',
+        'nilai',
+    ];
 }

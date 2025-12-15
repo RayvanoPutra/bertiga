@@ -9,15 +9,16 @@ $(document).ready(function() {
     const apiUrlNasabah = `${apiBaseUrl}/nasabah`;
     const apiStoreNasabah = `${apiBaseUrl}/nasabah`; 
     
+    // URL API untuk mengambil biaya admin (Sesuai routes/api.php)
+    const apiUrlBiayaAdmin = `${apiBaseUrl}/biaya-admin`; 
+    
     let currentPage = 1;
-    let biayaAdminPendaftaran = 0; // Global variable untuk menyimpan biaya admin
+    let biayaAdminPendaftaran = 0; // Global variable untuk menyimpan biaya admin (raw integer)
     
     // FUNGSI PENTING: Mendapatkan Auth Token 
     const getAuthToken = () => {
-        // 🛑 PERBAIKAN KRITIS: GANTI STRING INI dengan token yang BARU dan VALID
-        const hardcodedToken = '68|4Fu4brAT20xfbFDJhZ7diVSHeA3kgUQifmwpz4IM19245151'; // <-- CONTOH TOKEN VALID
-        // Anda harus mendapatkan token baru setelah sukses login Petugas
-        
+        // Ganti token ini dengan mekanisme pengambilan token yang dinamis (e.g., dari Session/Cookie/localStorage)
+        const hardcodedToken = '68|4Fu4brAT20xfbFDJhZ7diVSHeA3kgUQifmwpz4IM19245151'; // CONTOH
         return localStorage.getItem('authToken') || hardcodedToken; 
     }
 
@@ -43,23 +44,32 @@ $(document).ready(function() {
     function getBiayaAdmin() {
         const authToken = getAuthToken();
         
-        // 🛑 PERBAIKAN URL: Gunakan endpoint yang eksplisit untuk Pengaturan Biaya Admin
         $.ajax({
-            url: `${apiMasterDataPrefix}/pengaturan/biaya-admin`, // Asumsi Anda buat route ini
+            url: apiUrlBiayaAdmin, 
             method: 'GET',
             headers: { 'Authorization': 'Bearer ' + authToken, 'Accept': 'application/json' },
             success: function(response) {
-                // Asumsi API mengembalikan { nilai: 10000 }
-                const nilaiAdmin = response.nilai || response.data?.nilai;
-                biayaAdminPendaftaran = parseInt(nilaiAdmin) || 0;
+                // Ambil nilai mentah (raw) dan format
+                const nilaiAdminRaw = response.biaya_admin_raw;
+                const nilaiAdminFormatted = response.biaya_admin_formatted;
                 
-                $('#minSaldo').text(formatRupiah(biayaAdminPendaftaran).replace('Rp', '').trim()); // Update teks minimal saldo (tanpa Rp.)
+                biayaAdminPendaftaran = parseInt(nilaiAdminRaw) || 0;
+                
+                // 1. Update teks minimal saldo (tanpa Rp.)
+                $('#minSaldo').text(nilaiAdminFormatted); 
+                
+                // 2. Update field potongan admin
+                $('#potongan_admin').val(formatRupiah(biayaAdminPendaftaran));
+                
+                // 3. Hitung saldo awal (jika ada input default)
                 calculateSaldo(); 
             },
             error: function(xhr) {
-                console.error('Gagal memuat biaya admin. Error:', xhr.responseText);
+                console.error('Gagal memuat biaya admin. Menggunakan fallback Rp 0.', xhr.responseText);
                 biayaAdminPendaftaran = 0; // Fallback ke 0
                 $('#minSaldo').text('0');
+                $('#potongan_admin').val(formatRupiah(0));
+                calculateSaldo();
             }
         });
     }
@@ -68,7 +78,7 @@ $(document).ready(function() {
     function calculateSaldo() {
         const saldoAwal = parseInt($('#saldo_awal').val()) || 0;
         
-        // Potongan hanya berlaku jika saldo awal >= biaya admin
+        // Potongan hanya terjadi jika saldo awal mencukupi biaya admin
         const potongan = (saldoAwal >= biayaAdminPendaftaran) ? biayaAdminPendaftaran : 0;
         const saldoBersih = saldoAwal - potongan;
 
@@ -79,26 +89,27 @@ $(document).ready(function() {
         // Tampilkan pesan error jika saldo awal kurang dari minimum yang dibutuhkan
         const errorDiv = $('#errorMessages');
         if (saldoAwal < biayaAdminPendaftaran) {
-             errorDiv.html(`<p>Setoran Awal minimal ${formatRupiah(biayaAdminPendaftaran)} untuk menutupi biaya admin.</p>`).show();
+             errorDiv.html(`<p>Setoran Awal minimal ${formatRupiah(biayaAdminPendaftaran)} untuk menutupi biaya admin pendaftaran.</p>`).show();
+             $('#btnSimpan').prop('disabled', true); // Nonaktifkan tombol simpan
         } else {
              errorDiv.empty().hide();
+             $('#btnSimpan').prop('disabled', false); // Aktifkan tombol simpan
         }
     }
 
     // ====================================================================
     // --- LOGIKA MASTER DATA & DROPDOWN BERTINGKAT ---
     // ====================================================================
-
-    // Fungsi Generik untuk Memuat Data Master (untuk Filter & Form)
+    
+    // Fungsi Generik untuk Memuat Data Master
     function loadMasterData(endpoint, selectId, valueKey, labelKey, prependOption = true) {
         const authToken = getAuthToken();
         const $select = $(`#${selectId}`);
         const apiPath = `${apiMasterDataPrefix}${endpoint}`; 
 
-        // ... (sisanya sama seperti sebelumnya) ...
         if (!authToken) {
-            $select.empty().append(`<option value="">⚠️ Token Belum Diatur</option>`);
-            return;
+             $select.empty().append(`<option value="">⚠️ Token Belum Diatur</option>`);
+             return;
         }
         
         showLoading(selectId);
@@ -109,29 +120,29 @@ $(document).ready(function() {
         }
 
         $.ajax({
-            url: apiPath,
-            method: 'GET',
-            headers: { 'Authorization': 'Bearer ' + authToken, 'Accept': 'application/json' },
-            success: function(response) {
-                const dataArray = Array.isArray(response) ? response : response.data || [];
-                // ... (sisanya sama seperti sebelumnya) ...
-                if (dataArray.length > 0) {
-                     $.each(dataArray, function(index, item) {
-                         options += `<option value="${item[valueKey]}">${item[labelKey]}</option>`; 
-                     });
-                } else {
-                     options = `<option value="">Tidak ada data</option>`;
-                }
-                $select.html(options);
-            },
-            error: function(xhr) {
-                let errorMsg = xhr.status === 401 ? 'Unauthenticated (401)' : `Error ${xhr.status}`;
-                $select.html(`<option value="">⚠️ Gagal memuat (${errorMsg})</option>`);
-            }
+             url: apiPath,
+             method: 'GET',
+             headers: { 'Authorization': 'Bearer ' + authToken, 'Accept': 'application/json' },
+             success: function(response) {
+                 const dataArray = Array.isArray(response) ? response : response.data || [];
+                 
+                 if (dataArray.length > 0) {
+                      $.each(dataArray, function(index, item) {
+                          options += `<option value="${item[valueKey]}">${item[labelKey]}</option>`; 
+                      });
+                 } else {
+                      options = `<option value="">Tidak ada data</option>`;
+                 }
+                 $select.html(options);
+             },
+             error: function(xhr) {
+                 let errorMsg = xhr.status === 401 ? 'Unauthenticated (401)' : `Error ${xhr.status}`;
+                 $select.html(`<option value="">⚠️ Gagal memuat (${errorMsg})</option>`);
+             }
         });
     }
     
-    // ... (Fungsi loadKelasByJurusan tetap sama) ...
+    // Fungsi loadKelasByJurusan
     function loadKelasByJurusan(jurusanKode) {
         const kelasSelect = $('#kelas_id'); 
         kelasSelect.html('<option value="">Memuat Kelas...</option>');
@@ -145,25 +156,25 @@ $(document).ready(function() {
         const endpoint = `/kelas?kode_jurusan=${jurusanKode}`; 
         
         $.ajax({
-            url: apiMasterDataPrefix + endpoint, 
-            method: 'GET',
-            headers: { 'Authorization': 'Bearer ' + authToken, 'Accept': 'application/json' },
-            success: function(response) {
-                let options = '<option value="">Pilih Kelas</option>';
-                const dataArray = Array.isArray(response) ? response : response.data || [];
+             url: apiMasterDataPrefix + endpoint, 
+             method: 'GET',
+             headers: { 'Authorization': 'Bearer ' + authToken, 'Accept': 'application/json' },
+             success: function(response) {
+                 let options = '<option value="">Pilih Kelas</option>';
+                 const dataArray = Array.isArray(response) ? response : response.data || [];
 
-                if (dataArray.length > 0) {
-                    $.each(dataArray, function(index, item) {
-                        options += `<option value="${item.kode_kelas}">${item.nama_kelas}</option>`; 
-                    });
-                } else {
-                    options += '<option value="">Tidak ada Kelas untuk Jurusan ini</option>';
-                }
-                kelasSelect.html(options);
-            },
-            error: function(xhr) {
-                kelasSelect.html('<option value="">⚠️ Gagal memuat data kelas</option>');
-            }
+                 if (dataArray.length > 0) {
+                     $.each(dataArray, function(index, item) {
+                         options += `<option value="${item.kode_kelas}">${item.nama_kelas}</option>`; 
+                     });
+                 } else {
+                     options += '<option value="">Tidak ada Kelas untuk Jurusan ini</option>';
+                 }
+                 kelasSelect.html(options);
+             },
+             error: function(xhr) {
+                 kelasSelect.html('<option value="">⚠️ Gagal memuat data kelas</option>');
+             }
         });
     }
 
@@ -173,7 +184,7 @@ $(document).ready(function() {
         loadKelasByJurusan(selectedJurusanKode);
     });
     
-    // ... (Fungsi toggleSiswaFields dan loadNasabahData tetap sama) ...
+    // Fungsi toggleSiswaFields
     const toggleSiswaFields = () => {
         const jenisRekening = $('#jenis_rekening').val();
         const siswaFields = $('#siswa-specific-fields'); 
@@ -189,7 +200,7 @@ $(document).ready(function() {
     
     $('#jenis_rekening').on('change', toggleSiswaFields);
     
-    // ... (Logika loadNasabahData tetap sama) ...
+    // Fungsi getCurrentFilters (untuk load data tabel)
     function getCurrentFilters() {
         return {
             kelas_id: $('#kelasFilter').val(), 
@@ -204,8 +215,8 @@ $(document).ready(function() {
         const filters = getCurrentFilters();
         loadNasabahData(1, filters);
     });
-
-
+    
+    // Fungsi loadNasabahData (untuk load data tabel)
     function loadNasabahData(page = 1, filters = {}) {
         $('#nasabahTableBody').html('<tr><td colspan="9" class="text-center">Memuat data...</td></tr>');
         currentPage = page;
@@ -219,54 +230,53 @@ $(document).ready(function() {
         }
 
         $.ajax({
-            url: apiUrlNasabah, 
-            method: 'GET',
-            data: params,
-            headers: {
-                'Authorization': 'Bearer ' + authToken,
-                'Accept': 'application/json'
-            },
-            success: function(response) {
-                let rows = '';
-                
-                if (response.data && response.data.length > 0) {
-                    $.each(response.data, function(i, nasabah) {
-                        const no = i + 1 + (response.current_page - 1) * response.per_page;
-                        
-                        // Cek relasi null dengan aman
-                        const kelasNama = nasabah.kelas ? nasabah.kelas.nama_kelas : '-';
-                        const jurusanNama = nasabah.kelas && nasabah.kelas.jurusan ? nasabah.kelas.jurusan.nama_jurusan : '-';
-                        const tahunAjaranNama = '-'; // Perlu relasi Tahun Ajaran di model Kelas
-                        const saldoFormatted = formatRupiah(nasabah.saldo);
+             url: apiUrlNasabah, 
+             method: 'GET',
+             data: params,
+             headers: {
+                 'Authorization': 'Bearer ' + authToken,
+                 'Accept': 'application/json'
+             },
+             success: function(response) {
+                 let rows = '';
+                 
+                 if (response.data && response.data.length > 0) {
+                     $.each(response.data, function(i, nasabah) {
+                         const no = i + 1 + (response.current_page - 1) * response.per_page;
+                         
+                         const kelasNama = nasabah.kelas ? nasabah.kelas.nama_kelas : '-';
+                         const jurusanNama = nasabah.kelas && nasabah.kelas.jurusan ? nasabah.kelas.jurusan.nama_jurusan : '-';
+                         const tahunAjaranNama = '-'; 
+                         const saldoFormatted = formatRupiah(nasabah.saldo);
 
-                        rows += `<tr>
-                            <td>${no}</td>
-                            <td>${nasabah.no_rekening}</td>
-                            <td>${nasabah.nama}<br><small class="text-muted">Saldo: ${saldoFormatted}</small></td>
-                            <td>${nasabah.jenis_rekening}</td>
-                            <td>${kelasNama}</td>
-                            <td>${jurusanNama}</td>
-                            <td>${tahunAjaranNama}</td>
-                            <td><span class="badge badge-success">${nasabah.status}</span></td>
-                            <td>
-                                <button class="btn btn-sm btn-info edit-btn" data-rekening="${nasabah.no_rekening}">Edit</button>
-                                <button class="btn btn-sm btn-danger delete-btn" data-rekening="${nasabah.no_rekening}">Hapus</button>
-                            </td>
-                        </tr>`;
-                    });
-                } else {
-                    rows = '<tr><td colspan="9" class="text-center">Tidak ada data nasabah.</td></tr>';
-                }
-                $('#nasabahTableBody').html(rows);
-            },
-            error: function(xhr) {
-                const errorMsg = xhr.responseJSON && xhr.responseJSON.message ? xhr.responseJSON.message : (xhr.status === 401 ? 'Unauthenticated' : 'Terjadi kesalahan saat memuat data.');
-                $('#nasabahTableBody').html(`<tr><td colspan="9" class="text-center text-danger">Gagal memuat data: ${errorMsg}.</td></tr>`);
-            }
+                         rows += `<tr>
+                             <td>${no}</td>
+                             <td>${nasabah.no_rekening}</td>
+                             <td>${nasabah.nama}<br><small class="text-muted">Saldo: ${saldoFormatted}</small></td>
+                             <td>${nasabah.jenis_rekening}</td>
+                             <td>${kelasNama}</td>
+                             <td>${jurusanNama}</td>
+                             <td>${tahunAjaranNama}</td>
+                             <td><span class="badge badge-success">${nasabah.status}</span></td>
+                             <td>
+                                 <button class="btn btn-sm btn-info edit-btn" data-rekening="${nasabah.no_rekening}">Edit</button>
+                                 <button class="btn btn-sm btn-danger delete-btn" data-rekening="${nasabah.no_rekening}">Hapus</button>
+                             </td>
+                         </tr>`;
+                     });
+                 } else {
+                     rows = '<tr><td colspan="9" class="text-center">Tidak ada data nasabah.</td></tr>';
+                 }
+                 $('#nasabahTableBody').html(rows);
+             },
+             error: function(xhr) {
+                 const errorMsg = xhr.responseJSON && xhr.responseJSON.message ? xhr.responseJSON.message : (xhr.status === 401 ? 'Unauthenticated' : 'Terjadi kesalahan saat memuat data.');
+                 $('#nasabahTableBody').html(`<tr><td colspan="9" class="text-center text-danger">Gagal memuat data: ${errorMsg}.</td></tr>`);
+             }
         });
     }
 
-    // ... (Logika Form Submission tetap sama) ...
+    // Logika Form Submission
     $('#tambahNasabahForm').on('submit', function(e) {
         e.preventDefault(); 
         
@@ -274,7 +284,6 @@ $(document).ready(function() {
         const $btnSimpan = $form.find('#btnSimpan');
         $btnSimpan.prop('disabled', true).text('Menyimpan...');
 
-        // Clear dan hide pesan error
         $('#errorMessages').empty().hide(); 
 
         const formData = $form.serializeArray();
@@ -284,62 +293,67 @@ $(document).ready(function() {
             requestData[field.name] = field.value;
         });
 
-        // Pastikan saldo_awal adalah integer, bukan string
+        // Pastikan saldo_awal adalah integer
         requestData.saldo_awal = parseInt(requestData.saldo_awal); 
 
         const authToken = getAuthToken();
+        
+        // Tambahkan validasi minimum saldo sebelum submit
+        if (requestData.saldo_awal < biayaAdminPendaftaran) {
+             const errorDiv = $('#errorMessages');
+             errorDiv.html(`<p>Setoran Awal harus minimal ${formatRupiah(biayaAdminPendaftaran)} untuk menutupi biaya admin.</p>`).show();
+             $btnSimpan.prop('disabled', false).text('Simpan');
+             return; // Stop submission
+        }
 
         $.ajax({
-            url: apiStoreNasabah, 
-            method: 'POST',
-            data: requestData,
-            headers: {
-                'Authorization': 'Bearer ' + authToken,
-                'Accept': 'application/json'
-            },
-            success: function(response) {
-                alert('Sukses: ' + response.message); 
-                $('#modalTambahNasabah').modal('hide'); 
-                $form[0].reset(); 
-                loadNasabahData(1); 
-                // Reset perhitungan di form setelah sukses
-                $('#potongan_admin').val(formatRupiah(0));
-                $('#hasil_bersih').val(formatRupiah(0));
-            },
-            error: function(xhr) {
-                let errorMsg = 'Terjadi kesalahan saat menyimpan data.';
-                const errorDiv = $('#errorMessages');
-                errorDiv.show(); 
+             url: apiStoreNasabah, 
+             method: 'POST',
+             data: requestData,
+             headers: {
+                 'Authorization': 'Bearer ' + authToken,
+                 'Accept': 'application/json'
+             },
+             success: function(response) {
+                 alert('Sukses: ' + response.message); 
+                 $('#modalTambahNasabah').modal('hide'); 
+                 $form[0].reset(); 
+                 loadNasabahData(1); 
+                 // Reset perhitungan dan muat ulang biaya admin
+                 getBiayaAdmin(); 
+             },
+             error: function(xhr) {
+                 let errorMsg = 'Terjadi kesalahan saat menyimpan data.';
+                 const errorDiv = $('#errorMessages');
+                 errorDiv.show(); 
 
-                if (xhr.status === 422) {
-                    const errors = xhr.responseJSON.errors || xhr.responseJSON;
-                    let errorHtml = '<ul>';
-                    $.each(errors, function(key, value) {
-                        errorHtml += `<li><strong>${key.toUpperCase().replace('_', ' ')}:</strong> ${value.join('<br>')}</li>`;
-                    });
-                    errorHtml += '</ul>';
-                    errorDiv.html(errorHtml);
+                 if (xhr.status === 422) {
+                     const errors = xhr.responseJSON.errors || xhr.responseJSON;
+                     let errorHtml = '<ul>';
+                     $.each(errors, function(key, value) {
+                         errorHtml += `<li><strong>${key.toUpperCase().replace('_', ' ')}:</strong> ${value.join('<br>')}</li>`;
+                     });
+                     errorHtml += '</ul>';
+                     errorDiv.html(errorHtml);
 
-                } else if (xhr.status === 500 || xhr.status === 401) {
-                     errorMsg = xhr.responseJSON && xhr.responseJSON.message ? xhr.responseJSON.message : `Error Server (${xhr.status}).`;
-                     errorDiv.html(`<p class="text-danger">⚠️ ${errorMsg}</p>`);
-                } else {
-                     errorDiv.html(`<p class="text-danger">Terjadi kesalahan tak terduga (${xhr.status}).</p>`);
-                }
-                console.error("Error Store Nasabah:", xhr.responseText);
-            },
-            complete: function() {
-                $btnSimpan.prop('disabled', false).text('Simpan');
-            }
+                 } else if (xhr.status === 500 || xhr.status === 401) {
+                      errorMsg = xhr.responseJSON && xhr.responseJSON.message ? xhr.responseJSON.message : `Error Server (${xhr.status}).`;
+                      errorDiv.html(`<p class="text-danger">⚠️ ${errorMsg}</p>`);
+                 } else {
+                      errorDiv.html(`<p class="text-danger">Terjadi kesalahan tak terduga (${xhr.status}).</p>`);
+                 }
+                 console.error("Error Store Nasabah:", xhr.responseText);
+             },
+             complete: function() {
+                 $btnSimpan.prop('disabled', false).text('Simpan');
+             }
         });
     });
-
-
-    // =alahm ==============================================================
+    // ====================================================================
     // --- INISIALISASI APLIKASI ---
     // ====================================================================
     
-    // 🛑 Tambahkan event listener untuk perhitungan saldo real-time
+    // Tambahkan event listener untuk perhitungan saldo real-time
     $('#saldo_awal').on('input', calculateSaldo);
 
     // 1. Load Data Master

@@ -6,7 +6,9 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\MasterDataController;
 use App\Http\Controllers\Api\NasabahController;
 use App\Http\Controllers\Api\TransaksiController;
-use App\Http\Controllers\Api\MasterController; 
+use App\Http\Controllers\Api\MasterController;
+use App\Http\Controllers\Api\PengaturanController;
+use App\Http\Controllers\Api\DashboardController;
 
 /*
 |--------------------------------------------------------------------------
@@ -28,19 +30,28 @@ Route::middleware('auth:sanctum')->group(function () {
     // rute tes untuk mengecek token (mengembalikan data user yang sedang login)
     Route::get('/user', function (Request $request) {
         return $request->user();
+
+
+        // route dashboard
+        Route::get('/dashboard/metrics', [DashboardController::class, 'getMetrics']);
+
+        // route get nasabah
+        Route::get('/nasabah', [NasabahController::class, 'getNasabah']); // ✅ KOREKSI CASE SENSITIVITY
+        Route::post('/nasabah', [NasabahController::class, 'store']); 
+        // bulk update status (Anda perlu memastikan method ini ada di Controller)
+        Route::post('/nasabah/bulk-update-status', [NasabahController::class, 'bulkUpdateStatus']);
+        Route::delete('/nasabah/{no_rekening}', [NasabahController::class, 'deleteNasabah']);
     });
 
     // 🏆 ROUTE BIAYA ADMIN (Aman dari 404 jika diakses dengan token)
-    Route::get('/master/pengaturan/biaya-admin', [MasterController::class, 'getBiayaAdmin']); 
+    Route::get('/biaya-admin', [PengaturanController::class, 'getBiayaAdminDaftar']);
 
 
     // rute nasabah
-    Route::get('/nasabah', [NasabahController::class, 'getNasabah']); // ⬅️ Ini akan memanggil method getNasabah() yang baru
+    Route::get('/nasabah', [NasabahController::class, 'GetNasabah']); // ⬅️ Ini akan memanggil method getNasabah() yang baru
     Route::post('/nasabah', [NasabahController::class, 'store']);     // ⬅️ Ini akan memanggil method store() Anda yang baru
     
     // bulk update status (jika diperlukan)
-    Route::post('/nasabah/bulk-update-status', [NasabahController::class, 'bulkUpdateStatus']);
-    Route::delete('/nasabah/{no_rekening}', [NasabahController::class, 'deleteNasabah']);
 
     // ... (rute transaksi, master data lainnya) ...
     Route::prefix('transaksi')->group(function () {

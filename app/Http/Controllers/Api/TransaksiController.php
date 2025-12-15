@@ -152,7 +152,7 @@ class TransaksiController extends Controller
                 $transaksi->update([
                     'status' => 'approved',
                     // Asumsi: Anda menggunakan Petugas::id sebagai foreign key di kolom petugas_id
-                    'kode_petugas' => $request->user()->kode_petugas ?? $request->user()->id, // Sesuaikan kolom yang dipakai (kode_petugas atau id)
+                    'kode_petugas' => $request->user()->kode_petugas ?? $request->user()->id, // ⚠️ Potensi ERROR
                     'tgl_transaksi' => now(), // Diisi saat di-approve
                     'saldo_sebelum' => $saldo_sebelum, // Snapshot saldo sebelum
                     'saldo_setelah' => $saldo_setelah, // Snapshot saldo setelah

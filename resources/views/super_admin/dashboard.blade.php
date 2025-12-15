@@ -22,18 +22,16 @@
                 <br>
                 <div class="metric-grid">
                     <div class="metric-box metric-green">
-                        <i class="bi bi-currency-dollar metric-icon"></i>
                         <div class="metric-info">
                             <span class="metric-title">Tabungan Hari Ini</span>
-                            <span class="metric-value">Rp. 0</span>
+                            <span class="metric-value" id="tabungan-hari-ini-value">Rp. 0</span> 
                         </div>
                     </div>
                     
                     <div class="metric-box metric-blue">
-                        <i class="bi bi-wallet2 metric-icon"></i>
                         <div class="metric-info">
                             <span class="metric-title">Total Tabungan</span>
-                            <span class="metric-value">Rp. 0</span>
+                            <span class="metric-value" id="total-tabungan-value">Rp. 0</span> 
                         </div>
                     </div>
                     
@@ -46,10 +44,9 @@
                     </div>
                     
                     <div class="metric-box metric-orange">
-                        <i class="bi bi-graph-up-arrow metric-icon"></i>
                         <div class="metric-info">
                             <span class="metric-title">Jumlah Transaksi</span>
-                            <span class="metric-value">0</span>
+                            <span class="metric-value" id="jumlah-transaksi-value">0</span> 
                         </div>
                     </div>
                 </div>
