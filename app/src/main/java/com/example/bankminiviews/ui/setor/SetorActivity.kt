@@ -1,6 +1,5 @@
 package com.example.bankminiviews.ui.setor
 
-
 import android.os.Bundle
 import android.widget.Button
 import android.widget.EditText
@@ -24,14 +23,13 @@ class SetorActivity : AppCompatActivity() {
 
     private lateinit var sessionManager: SessionManager
     private lateinit var etJumlah: EditText
-    // etKeterangan sudah dihapus
     private lateinit var btnKonfirmasi: Button
     private lateinit var toolbar: MaterialToolbar
 
-    // TANYAKAN TEMAN ANDA:
-    // Berapa ID untuk "Setor Tunai" di tabel 'jenis_transaksi' Anda?
-    // Saya akan asumsikan ID-nya adalah 1.
-    private val JENIS_TRANSAKSI_ID_SETOR = 1
+    // --- PERBAIKAN DI SINI ---
+    // Sesuaikan dengan Seeder teman Anda: 'SETOR'
+    private val KODE_JENIS_SETOR = "SETOR"
+    // -------------------------
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -39,9 +37,7 @@ class SetorActivity : AppCompatActivity() {
 
         sessionManager = SessionManager(this)
 
-        // Inisialisasi View
         etJumlah = findViewById(R.id.editTextJumlahSetor)
-        // findViewById etKeterangan sudah dihapus
         btnKonfirmasi = findViewById(R.id.buttonKonfirmasiSetor)
         toolbar = findViewById(R.id.toolbarSetor)
 
@@ -49,6 +45,7 @@ class SetorActivity : AppCompatActivity() {
             finish()
         }
 
+        // Setup Chip Listener
         setupChipListener(R.id.chip10k, 10000)
         setupChipListener(R.id.chip20k, 20000)
         setupChipListener(R.id.chip50k, 50000)
@@ -58,28 +55,20 @@ class SetorActivity : AppCompatActivity() {
 
         btnKonfirmasi.setOnClickListener {
             val jumlahString = etJumlah.text.toString()
-            val jumlahLong = jumlahString.toLongOrNull() // Ambil nilainya
+            val jumlahLong = jumlahString.toLongOrNull()
 
-            if (jumlahLong == null || jumlahLong == 0L) {
-                Toast.makeText(this, "Jumlah tidak boleh kosong atau nol", Toast.LENGTH_SHORT).show()
-                return@setOnClickListener
-            }
-
-            if (jumlahLong < 1000) {
-                Toast.makeText(this, "Minimal setoran adalah Rp 1.000", Toast.LENGTH_SHORT).show()
+            if (jumlahLong == null || jumlahLong < 1000) {
+                Toast.makeText(this, "Jumlah minimal Rp 1.000", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
 
             showConfirmationDialog(jumlahLong)
         }
-
     }
 
     private fun setupChipListener(chipId: Int, nominal: Long) {
         findViewById<Chip>(chipId).setOnClickListener {
-            // Isi EditText dengan nominal saat chip diklik
             etJumlah.setText(nominal.toString())
-            // Pindahkan kursor ke akhir teks
             etJumlah.setSelection(etJumlah.text.length)
         }
     }
@@ -108,23 +97,22 @@ class SetorActivity : AppCompatActivity() {
             return
         }
 
-        // --- INI LOGIKA YANG DIPERBARUI ---
+        // --- UPDATE REQUEST ---
+        // Pastikan SetorRequest.kt Anda sudah menggunakan String untuk kodeJenis
         val request = SetorRequest(
             jumlah = jumlah,
-            jenisTransaksiId = JENIS_TRANSAKSI_ID_SETOR // Menggunakan ID yg dihardcode
-            // Keterangan tidak dikirim
+            kodeJenis = KODE_JENIS_SETOR // Mengirim string "SETOR"
         )
-        // --- AKHIR PERUBAHAN ---
 
         ApiClient.instance.requestSetor(token, request)
             .enqueue(object : Callback<SetorResponse> {
                 override fun onResponse(call: Call<SetorResponse>, response: Response<SetorResponse>) {
                     if (response.isSuccessful) {
                         val message = response.body()?.message ?: "Permintaan berhasil dikirim"
-                        Toast.makeText(this@SetorActivity, "$message (Menunggu persetjujuan petugas)", Toast.LENGTH_LONG).show()
+                        Toast.makeText(this@SetorActivity, "$message (Menunggu persetujuan)", Toast.LENGTH_LONG).show()
                         finish()
                     } else {
-                        Toast.makeText(this@SetorActivity, "Gagal mengirim permintaan. Kode: ${response.code()}", Toast.LENGTH_LONG).show()
+                        Toast.makeText(this@SetorActivity, "Gagal: Kode ${response.code()}", Toast.LENGTH_LONG).show()
                     }
                 }
 

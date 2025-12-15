@@ -23,4 +23,6 @@
     <!-- Warna standar -->
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+
+    <color name="holo_green_dark">#006400</color>
 </resources>

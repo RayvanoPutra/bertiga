@@ -3,36 +3,37 @@ package com.example.bankminiviews.data.model
 import com.google.gson.annotations.SerializedName
 
 /**
- * Ini adalah cetakan untuk SATU item riwayat transaksi
- * yang dikirim oleh server.
+ * Model Data untuk Riwayat Transaksi.
+ * Sesuai dengan tabel 'transaksi' dan relasi 'jenis_transaksi' di Laravel.
  */
 data class HistoryItemResponse(
-    @SerializedName("id")
-    val id: Int,
+    // Primary Key sekarang adalah String (TRX-...)
+    @SerializedName("kode_transaksi")
+    val kodeTransaksi: String,
 
     @SerializedName("jumlah")
     val jumlah: Long,
 
+    // Nilai: 'pending', 'success', 'rejected'
     @SerializedName("status")
-    val status: String, // "approved" atau "rejected" atau "pending"
+    val status: String,
 
     @SerializedName("tgl_transaksi")
-    val tglTransaksi: String?, // Contoh: "2025-11-17T10:30:00.000000Z"
+    val tglTransaksi: String?, // Bisa null jika pending
 
-    // --- TAMBAHKAN BARIS INI ---
     @SerializedName("keterangan_nasabah")
-    val keteranganNasabah: String?, // "OES TEH SI"
+    val keteranganNasabah: String?,
 
-    // Ini adalah objek di dalam objek
+    // Ini objek hasil dari ->with('jenisTransaksi')
     @SerializedName("jenis_transaksi")
-    val jenisTransaksi: JenisTransaksi
+    val jenisTransaksi: JenisTransaksiData
 )
 
-/**
- * Ini adalah cetakan untuk objek 'jenis_transaksi'
- * yang ada di dalam HistoryItemResponse.
- */
-data class JenisTransaksi(
+data class JenisTransaksiData(
+    // Primary Key Jenis sekarang adalah String (SETOR, TARIK)
+    @SerializedName("kode_jenis")
+    val kodeJenis: String,
+
     @SerializedName("nama_jenis")
-    val namaJenis: String // "Setor Tunai" atau "Tarik Tunai"
+    val namaJenis: String
 )

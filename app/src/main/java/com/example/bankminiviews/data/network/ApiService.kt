@@ -1,14 +1,14 @@
 package com.example.bankminiviews.data.network
 
+import com.example.bankminiviews.data.model.HistoryItemResponse
 import com.example.bankminiviews.data.model.LoginRequest
 import com.example.bankminiviews.data.model.LoginResponse
 import com.example.bankminiviews.data.model.NasabahData
 import com.example.bankminiviews.data.model.SetorRequest
 import com.example.bankminiviews.data.model.SetorResponse
-// (Nanti Anda perlu import model untuk Tarik dan History)
-// import com.example.bankminiviews.data.model.TarikRequest
-// import com.example.bankminiviews.data.model.HistoryResponse
-import com.example.bankminiviews.data.model.HistoryItemResponse
+import com.example.bankminiviews.data.model.TarikRequest
+import com.example.bankminiviews.data.model.OtpRequest
+import com.example.bankminiviews.data.model.LaporanResponse
 import retrofit2.Call
 import retrofit2.http.Body
 import retrofit2.http.GET
@@ -18,41 +18,42 @@ import retrofit2.http.POST
 interface ApiService {
 
     @POST("login/nasabah")
-    fun loginNasabah(
-        @Body request: LoginRequest
-    ): Call<LoginResponse>
+    fun loginNasabah(@Body request: LoginRequest): Call<LoginResponse>
 
     @GET("user")
-    fun getNasabahData(
-        @Header("Authorization") token: String
-    ): Call<NasabahData>
+    fun getNasabahData(@Header("Authorization") token: String): Call<NasabahData>
 
-    // --- ALAMAT INI TELAH DIPERBARUI ---
-    // Sesuai dengan Route::prefix('transaksi')->group
-    // dan Route::post('/request-setor', ...)
-    @POST("transaksi/request-setor")
+    // --- PERBAIKAN URL DI SINI ---
+    // Dulu: "transaksi/request-setor"
+    // Sekarang: "transaksi/request" (Sesuai routes/api.php teman Anda)
+    @POST("transaksi/request")
     fun requestSetor(
         @Header("Authorization") token: String,
         @Body request: SetorRequest
     ): Call<SetorResponse>
 
+    // --- PERBAIKAN URL DI SINI JUGA ---
+    // Tarik tunai juga menggunakan pintu yang sama ("/request")
+    // Server membedakan berdasarkan 'kode_jenis' yang kita kirim ("SETOR" atau "TARIK")
+    @POST("transaksi/request")
+    fun requestTarik(
+        @Header("Authorization") token: String,
+        @Body request: TarikRequest
+    ): Call<SetorResponse> // Format balasan sama
+
     @GET("transaksi/history")
-    fun getHistory(
+    fun getHistory(@Header("Authorization") token: String): Call<List<HistoryItemResponse>>
+
+    // 1. Minta Kode OTP
+    @POST("laporan/request-otp")
+    fun requestOtp(
         @Header("Authorization") token: String
-    ): Call<List<HistoryItemResponse>> // <-- Kita minta DAFTAR (List) dari HistoryItem
+    ): Call<SetorResponse> // Kita pakai SetorResponse karena isinya cuma 'message'
 
-    // --- Rute lain dari file routes/api.php (bisa Anda gunakan nanti) ---
-
-    // (Anda akan butuh TarikRequest.kt dan TarikResponse.kt nanti)
-    // @POST("transaksi/request-tarik")
-    // fun requestTarik(
-    //     @Header("Authorization") token: String,
-    //     @Body request: TarikRequest
-    // ): Call<TarikResponse>
-
-    // (Anda akan butuh HistoryResponse.kt nanti)
-    // @GET("transaksi/history")
-    // fun getHistory(
-    //     @Header("Authorization") token: String
-    // ): Call<List<HistoryResponse>>
+    // 2. Kirim OTP untuk dapat URL PDF
+    @POST("laporan/verify")
+    fun verifyLaporanOtp(
+        @Header("Authorization") token: String,
+        @Body request: OtpRequest
+    ): Call<LaporanResponse>
 }

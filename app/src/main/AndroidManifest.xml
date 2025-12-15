@@ -37,6 +37,18 @@
             android:name=".ui.history.HistoryActivity"
             android:exported="false" />
 
+        <activity
+            android:name=".ui.tarik.TarikActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".ui.profile.ProfileActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".ui.laporan.LaporanActivity"
+            android:exported="false" />
+
     </application>
 
 </manifest>

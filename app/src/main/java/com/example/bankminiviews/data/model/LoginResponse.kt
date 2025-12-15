@@ -3,18 +3,22 @@ package com.example.bankminiviews.data.model
 import com.google.gson.annotations.SerializedName
 
 /**
- * Ini adalah "cetakan" untuk JSON dari API login/nasabah
- * Kita sesuaikan berdasarkan tes login petugas:
- * - Menggunakan "access_token" (bukan "token")
- * - Menggunakan "user" (bukan "nasabah")
+ * Update sesuai respons Login Nasabah dari Server:
+ * {
+ * "message": "Login Berhasil",
+ * "token": "...",  <-- Nama kuncinya 'token'
+ * "data": { ... }  <-- Nama kuncinya 'data' (berisi profil nasabah)
+ * }
  */
 data class LoginResponse(
     @SerializedName("message")
     val message: String,
 
-    @SerializedName("access_token")
+    // Ganti "access_token" menjadi "token"
+    @SerializedName("token")
     val token: String?,
 
-    @SerializedName("user")
-    val nasabah: NasabahData? // Key "user" akan berisi data Nasabah
+    // Ganti "user" menjadi "data"
+    @SerializedName("data")
+    val nasabah: NasabahData?
 )
