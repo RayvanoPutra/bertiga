@@ -1,0 +1,179 @@
+/* ====================================
+   KEYFRAMES (DEFINISI ANIMASI)
+   ==================================== */
+   @keyframes background-move {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+@keyframes loading-spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+@keyframes form-pulse {
+    0% { transform: scale(0.98); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+/* ====================================
+   GLOBAL STYLES (BACKGROUND & FONT)
+   ==================================== */
+body {
+    margin: 0;
+    font-family: 'Poppins', sans-serif;
+    color: #333;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    
+    /* Latar Belakang Animasi */
+    background: linear-gradient(-45deg, #0e1a3a, #1a2c5a, #00ced1, #1e3a6a); /* Navy Blue, Dark Blue, Turquoise */
+    background-size: 400% 400%;
+    animation: background-move 20s ease infinite; /* Animasi berulang lebih lambat */
+}
+
+/* ====================================
+   CONTAINER & FORM
+   ==================================== */
+.container {
+    width: 100%;
+    max-width: 400px;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+.login-form {
+    background: #ffffff;
+    padding: 45px 30px;
+    border-radius: 15px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5); /* Shadow yang lebih gelap */
+    border: 1px solid #f0f0f0;
+    
+    /* Animasi Form Masuk */
+    animation: form-pulse 0.6s ease-out;
+}
+
+h2 {
+    text-align: center;
+    margin-bottom: 35px;
+    color: #0e1a3a; /* Deep Navy */
+    font-size: 2.2em;
+    font-weight: 800;
+}
+
+h2::after {
+    content: '';
+    display: block;
+    width: 60px;
+    height: 4px;
+    background-color: #00ced1; /* Turquoise Aksen */
+    margin: 10px auto 0;
+    border-radius: 2px;
+}
+
+/* ====================================
+   FORM ELEMENTS
+   ==================================== */
+.login-form > div {
+    margin-bottom: 25px;
+}
+
+label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: #444;
+    font-size: 0.95em;
+}
+
+input[type="text"],
+input[type="password"] {
+    width: 100%;
+    padding: 14px;
+    border: 1px solid #ddd;
+    border-radius: 10px; /* Sudut lebih melengkung */
+    box-sizing: border-box;
+    font-size: 1em;
+    background-color: #f9f9f9;
+    transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+input[type="text"]:focus,
+input[type="password"]:focus {
+    border-color: #00ced1; /* Aksen Turquoise saat fokus */
+    box-shadow: 0 0 0 4px rgba(0, 206, 209, 0.3);
+    outline: none;
+    background-color: #fff;
+}
+
+/* ====================================
+   BUTTON (Aksen Glowing)
+   ==================================== */
+button {
+    width: 100%;
+    padding: 16px;
+    background-color: #1a2c5a; /* Warna utama tombol */
+    color: white;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 1.2em;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    transition: background-color 0.3s, box-shadow 0.3s, transform 0.1s;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 8px 15px rgba(26, 44, 90, 0.4); /* Shadow default */
+}
+
+button:hover:not(:disabled) {
+    background-color: #0e1a3a; /* Warna Deep Navy saat hover */
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3), 0 0 15px #00ced1; /* Efek Glow Aksen Turquoise */
+    transform: translateY(-2px);
+}
+
+button:active:not(:disabled) {
+    transform: scale(0.98);
+}
+
+/* Style saat tombol dinonaktifkan (Loading) */
+button:disabled {
+    background-color: #5d6a8a;
+    cursor: wait;
+    color: transparent; 
+    box-shadow: none;
+}
+
+/* Animasi Spinner Loading */
+button:disabled::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 20px;
+    height: 20px;
+    margin-top: -10px;
+    margin-left: -10px;
+    border: 3px solid rgba(255, 255, 255, 0.4);
+    border-top-color: #ffffff;
+    border-radius: 50%;
+    animation: loading-spin 1s linear infinite;
+}
+
+/* ====================================
+   ERROR MESSAGE
+   ==================================== */
+#error-message {
+    color: #e74c3c;
+    background-color: #fff5f5;
+    border: 1px solid #e74c3c;
+    padding: 15px;
+    border-radius: 10px;
+    margin-bottom: 25px;
+    text-align: center;
+    font-size: 0.9em;
+    font-weight: 500;
+}

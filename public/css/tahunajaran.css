@@ -1,0 +1,450 @@
+/* --- 1. RESET DAN BASE STYLES --- */
+:root {
+    --primary-color: #007bff;
+    --primary-dark: #0056b3;
+    --secondary-color: #6c757d;
+    --success-color: #28a745;
+    --warning-color: #ffc107;
+    --danger-color: #dc3545;
+    --info-color: #17a2b8;
+    --background-light: #f4f7f9;
+    --sidebar-width: 250px;
+    --sidebar-min-width: 80px;
+    --header-height: 60px;
+    --card-bg: #ffffff;
+    --text-color: #333;
+    --text-muted: #666;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    background-color: var(--background-light);
+    color: var(--text-color);
+}
+
+/* --- 2. LAYOUT APLIKASI (SIDEBAR & MAIN CONTENT) --- */
+#app-container {
+    display: flex;
+    min-height: 100vh;
+}
+
+/* SIDEBAR STYLES */
+#sidebar {
+    width: var(--sidebar-width);
+    background-color: #2c3e50;
+    color: white;
+    padding: 20px 10px;
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100%;
+    transition: width 0.3s ease;
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+}
+
+#sidebar .logo {
+    font-size: 1.5rem;
+    font-weight: bold;
+    text-align: center;
+    margin-bottom: 30px;
+    padding: 0 10px;
+}
+
+#sidebar nav {
+    flex-grow: 1;
+}
+
+#sidebar a {
+    display: flex;
+    align-items: center;
+    padding: 10px 15px;
+    margin: 5px 0;
+    text-decoration: none;
+    color: rgba(255, 255, 255, 0.8);
+    border-radius: 5px;
+    transition: background-color 0.2s, color 0.2s;
+    white-space: nowrap; /* Penting untuk mode minimized */
+}
+
+#sidebar a:hover,
+#sidebar a.active {
+    background-color: #34495e;
+    color: white;
+}
+
+#sidebar a i {
+    font-size: 1.2rem;
+    margin-right: 15px;
+    width: 20px; /* Memastikan ikon memiliki lebar tetap */
+}
+
+#sidebar .menu-section {
+    color: rgba(255, 255, 255, 0.4);
+    font-size: 0.8rem;
+    padding: 15px;
+    margin-top: 10px;
+    text-transform: uppercase;
+}
+
+#sidebar .logout-btn {
+    margin-top: auto; /* Mendorong tombol ke bawah */
+    background-color: var(--danger-color);
+    margin-bottom: 0;
+}
+
+#sidebar .logout-btn:hover {
+    background-color: #c82333;
+}
+
+/* SIDEBAR TOGGLE BUTTON */
+#sidebar-toggler {
+    position: absolute;
+    top: 15px;
+    right: -30px; /* Posisikan di luar sidebar */
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 1.5rem;
+    color: var(--primary-color);
+    z-index: 1001;
+    transition: right 0.3s ease;
+}
+
+#sidebar-toggler i {
+    transition: transform 0.3s;
+}
+
+/* MINIMIZED STATE */
+#app-container.minimized #sidebar {
+    width: var(--sidebar-min-width);
+    padding: 20px 0;
+}
+
+#app-container.minimized #sidebar .logo,
+#app-container.minimized #sidebar span,
+#app-container.minimized #sidebar .menu-section {
+    display: none;
+}
+
+#app-container.minimized #sidebar a {
+    justify-content: center;
+    padding: 10px 0;
+}
+
+#app-container.minimized #sidebar a i {
+    margin-right: 0;
+}
+
+#app-container.minimized #main-content {
+    margin-left: var(--sidebar-min-width);
+}
+
+#app-container.minimized #sidebar-toggler {
+    right: -40px; 
+}
+
+
+/* MAIN CONTENT STYLES */
+#main-content {
+    margin-left: var(--sidebar-width);
+    flex-grow: 1;
+    padding: 20px;
+    transition: margin-left 0.3s ease;
+}
+
+#main-content header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #ddd;
+}
+
+.page-title {
+    font-size: 1.8rem;
+    color: var(--text-color);
+}
+
+.main-card {
+    background: var(--card-bg);
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+}
+
+/* --- 3. BUTTONS (GLOBAL) & FORMS --- */
+.btn {
+    padding: 10px 15px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: background-color 0.2s, opacity 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.btn-sm {
+    padding: 5px 10px;
+    font-size: 0.85rem;
+}
+
+.btn-primary {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+.btn-primary:hover {
+    background-color: var(--primary-dark);
+}
+
+.btn-secondary {
+    background-color: var(--secondary-color);
+    color: white;
+}
+
+.btn-secondary:hover {
+    background-color: #5a6268;
+}
+
+.btn-danger {
+    background-color: var(--danger-color);
+    color: white;
+}
+
+.btn-danger:hover {
+    background-color: #c82333;
+}
+
+.btn-warning {
+    background-color: var(--warning-color);
+    color: var(--text-color);
+}
+
+.btn-warning:hover {
+    background-color: #e0a800;
+}
+
+.form-group-col {
+    margin-bottom: 15px;
+}
+
+.form-group-col label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+    color: var(--text-color);
+}
+
+.form-control {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 1rem;
+}
+
+.form-control:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+    outline: none;
+}
+
+/* --- 4. TABLE STYLES --- */
+.table-responsive {
+    overflow-x: auto;
+}
+
+.table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+}
+
+.table thead th {
+    background-color: var(--background-light);
+    color: var(--text-color);
+    padding: 12px 15px;
+    text-align: left;
+    border-bottom: 2px solid #ddd;
+}
+
+.table tbody td {
+    padding: 12px 15px;
+    border-bottom: 1px solid #eee;
+    vertical-align: middle;
+}
+
+.table tbody tr:hover {
+    background-color: #f9f9f9;
+}
+
+
+/* --- 5. BADGE STATUS STYLES --- */
+.badge {
+    padding: 5px 10px;
+    border-radius: 15px;
+    font-size: 0.75rem;
+    font-weight: bold;
+    display: inline-block;
+    min-width: 80px;
+    text-align: center;
+}
+
+.status-aktif {
+    background-color: var(--success-color);
+    color: white;
+}
+
+.status-nonaktif {
+    background-color: var(--secondary-color);
+    color: white;
+}
+
+/* --- 6. MODAL STYLES --- */
+.modal {
+    display: none; 
+    position: fixed; 
+    z-index: 2000; 
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0, 0, 0, 0.6); 
+    padding-top: 60px;
+}
+
+.modal-content {
+    background-color: var(--card-bg);
+    margin: 5% auto; 
+    padding: 25px;
+    border-radius: 8px;
+    width: 90%; 
+    max-width: 500px; 
+    position: relative;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+}
+
+.modal-content h3 {
+    margin-top: 0;
+    margin-bottom: 20px;
+    color: var(--primary-dark);
+    border-bottom: 1px solid #eee;
+    padding-bottom: 10px;
+}
+
+.close-btn {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+}
+
+.close-btn:hover,
+.close-btn:focus {
+    color: var(--danger-color);
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 20px;
+    padding-top: 15px;
+    border-top: 1px solid #eee;
+}
+
+/* Form Message */
+.form-message {
+    padding: 10px 15px;
+    margin-top: 10px;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    text-align: center;
+    display: none;
+}
+
+.form-message.success {
+    background-color: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.form-message.error {
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+
+/* --- 7. FILTER CONTROLS --- */
+.filter-controls {
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* --- 8. MEDIA QUERIES (RESPONSIVENESS) --- */
+@media (max-width: 768px) {
+    #sidebar {
+        width: var(--sidebar-min-width); /* Default ke minimized di layar kecil */
+    }
+
+    #sidebar .logo,
+    #sidebar span,
+    #sidebar .menu-section {
+        display: none;
+    }
+
+    #sidebar a {
+        justify-content: center;
+        padding: 10px 0;
+    }
+
+    #sidebar a i {
+        margin-right: 0;
+    }
+    
+    #sidebar-toggler {
+        display: none; /* Sembunyikan toggler jika sudah default minimized */
+    }
+
+    #main-content {
+        margin-left: var(--sidebar-min-width);
+        padding: 15px;
+    }
+    
+    #app-container.minimized #main-content {
+        margin-left: var(--sidebar-min-width);
+    }
+
+    #main-content header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+
+    .btn {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .modal-content {
+        width: 95%;
+        margin: 20px auto;
+    }
+}
