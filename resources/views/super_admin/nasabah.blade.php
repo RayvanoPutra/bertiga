@@ -74,11 +74,7 @@
                             </div>
                             
                             {{-- 🛑 PERBAIKAN: Hapus Input No. Rekening yang digenerate oleh Controller 🛑 --}}
-                            <div class="form-group">
-                                <label>Nomor Rekening</label>
-                                <input type="text" class="form-control bg-light" value="Otomatis digenerate" readonly> 
-                            </div>
-                            
+            
                             <div class="form-group">
                                 <label for="nama">Nama <span class="text-danger">*</span></label>
                                 <input type="text" class="form-control" id="nama" name="nama" required>

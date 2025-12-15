@@ -35,8 +35,8 @@ Route::middleware('auth:sanctum')->group(function () {
 
 
     // rute nasabah
-    Route::get('/nasabah', [NasabahController::class, 'getNasabah']); 
-    Route::post('/nasabah', [NasabahController::class, 'storeNasabah']);
+    Route::get('/nasabah', [NasabahController::class, 'getNasabah']); // ⬅️ Ini akan memanggil method getNasabah() yang baru
+    Route::post('/nasabah', [NasabahController::class, 'store']);     // ⬅️ Ini akan memanggil method store() Anda yang baru
     
     // bulk update status (jika diperlukan)
     Route::post('/nasabah/bulk-update-status', [NasabahController::class, 'bulkUpdateStatus']);
