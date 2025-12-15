@@ -2,9 +2,9 @@
 
 namespace Database\Seeders;
 
+use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
-use App\Models\Kelas; // Pastikan model Kelas ada
-
+use App\Models\Kelas;
 class KelasSeeder extends Seeder
 {
     /**
@@ -12,29 +12,19 @@ class KelasSeeder extends Seeder
      */
     public function run(): void
     {
-        /**
-         * PENTING:
-         * Pastikan di tabel 'tahun_ajaran' SUDAH ADA data dengan id=1
-         * Pastikan di tabel 'jurusan' SUDAH ADA data dengan kode_jurusan='RPL'
-         * (Data ini dibuat oleh JurusanSeeder dan TahunAjaranSeeder Anda)
-         */
-        Kelas::updateOrCreate(
-            ['id' => 1], // Kunci untuk NasabahSeeder
-            [
-                'nama_kelas' => 'X RPL 1',
-                'tahun_ajaran_id' => 1,  // <-- Sesuaikan jika ID-nya beda
-                'kode_jurusan' => 'RPL' // <-- Ganti ini jika kode jurusan Anda beda
-            ]
-        );
+        // Format Kelas [KELAS]-[JURUSAN]-[TAHUN AJAR]
+        Kelas::create([
+            'kode_kelas' => 'X-RPL-1-2425',
+            'nama_kelas' => 'X RPL 1',
+            'kode_tahun_ajaran' => 'TA-2425',
+            'kode_jurusan' => 'RPL'
+        ]);
 
-        // Tambahkan kelas lain jika perlu
-        Kelas::updateOrCreate(
-            ['id' => 2], 
-            [
-                'nama_kelas' => 'X TKJ 1',
-                'tahun_ajaran_id' => 1,  
-                'kode_jurusan' => 'TKJ' // Pastikan 'TKJ' ada di tabel jurusan
-            ]
-        );
+        Kelas::create([
+            'kode_kelas' => 'XI-TKJ-2-2425',
+            'nama_kelas' => 'XI TKJ 2',
+            'kode_tahun_ajaran' => 'TA-2425',
+            'kode_jurusan' => 'TKJ'
+        ]);
     }
 }

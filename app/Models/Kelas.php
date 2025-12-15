@@ -12,12 +12,13 @@ class Kelas extends Model
     use HasFactory;
 
     protected $table = 'kelas';
-    protected $fillable = ['tahun_ajaran_id', 'kode_jurusan', 'nama_kelas'];
-
-    //Relasi ke tahun ajaran 1 to many
-    public function tahunAjaran(): BelongsTo
+    protected $primaryKey = 'kode_kelas'; 
+    public $incrementing = false;
+    protected $keyType = 'string';
+    protected $guarded = [];
+    public function tahunAjaran()
     {
-        return $this->belongsTo(TahunAjaran::class);
+        return $this->belongsTo(TahunAjaran::class, 'kode_tahun_ajaran', 'kode_tahun_ajaran');
     }
 
     public function jurusan(): BelongsTo
@@ -26,11 +27,6 @@ class Kelas extends Model
         // Parameter ke-2: Foreign Key di tabel 'kelas' (tabel ini)
         // Parameter ke-3: Primary Key di tabel 'jurusan' (tabel tujuan)
         return $this->belongsTo(Jurusan::class, 'kode_jurusan', 'kode_jurusan');
-    }
-
-    public function nasabah(): HasMany
-    {
-        return $this->hasMany(Nasabah::class);
     }
 
 }

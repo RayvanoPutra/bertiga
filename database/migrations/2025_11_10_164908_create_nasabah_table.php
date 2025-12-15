@@ -12,18 +12,20 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('nasabah', function (Blueprint $table) {
-            $table->string('no_rekening')->primary();
-            $table->foreignId('kelas_id')->nullable()->constrained('kelas');
-            $table->string('no_induk')->unique();
-            $table->string('nama');
-            $table->string('email')->nullable();
-            $table->string('no_telp')->nullable();
-            $table->text('alamat')->nullable();
+            $table->string('no_rekening', 20)->primary();
+            //Relasi Kelas
+            $table->string('kode_kelas', 20)->nullable();
+            $table->foreign('kode_kelas')->references('kode_kelas')->on('kelas')->onDelete('cascade');
+
+            $table->string('no_induk', 20)->unique();
+            $table->string('nama', 100);
+            $table->string('email', 100)->nullable();
+            $table->string('no_telp', 20)->nullable();
             $table->enum('jenis_rekening', ['siswa', 'guru']);
             $table->bigInteger('saldo')->default(0);
 
-            // Info Login Nasabah (untuk Android)
-            $table->string('username')->unique();
+            // Info Login Nasabah
+            $table->string('username', 50)->unique();
             $table->string('password');
             $table->timestamps();
         });

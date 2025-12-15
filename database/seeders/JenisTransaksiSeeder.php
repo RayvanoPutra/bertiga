@@ -13,10 +13,8 @@ class JenisTransaksiSeeder extends Seeder
      */
     public function run(): void
     {
-        JenisTransaksi::updateOrCreate(['nama_jenis' => 'Setor Tunai']);
-        JenisTransaksi::updateOrCreate(['nama_jenis' => 'Tarik Tunai']);
-        JenisTransaksi::updateOrCreate(['nama_jenis' => 'Saldo Awal']);
-        JenisTransaksi::updateOrCreate(['nama_jenis' => 'Biaya Admin']);
-        JenisTransaksi::updateOrCreate(['nama_jenis' => 'Bunga Bank']);
+        JenisTransaksi::create(['kode_jenis' => 'SETOR', 'nama_jenis' => 'Setor Tunai']);
+        JenisTransaksi::create(['kode_jenis' => 'TARIK', 'nama_jenis' => 'Tarik Tunai']);
+        JenisTransaksi::create(['kode_jenis' => 'AWAL', 'nama_jenis' => 'Saldo Awal']);
     }
 }

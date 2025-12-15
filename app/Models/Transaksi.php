@@ -10,10 +10,13 @@ class Transaksi extends Model
 {
     use HasFactory;
     protected $table = 'transaksi';
+    protected $primaryKey = 'kode_transaksi';
+    public $incrementing = false;
+    protected $keyType = 'string';
     protected $guarded = [];
 
     //relasi ke nasabah 
-    public function nasabah(): BelongsTo
+    public function nasabah()
     {
         // Non-Standar: Kita harus beri tahu nama FK dan PK-nya
         // Parameter ke-2: Foreign Key di tabel 'transaksi' (tabel ini)
@@ -21,13 +24,13 @@ class Transaksi extends Model
         return $this->belongsTo(Nasabah::class, 'no_rekening', 'no_rekening');
     }
 
-    public function petugas(): BelongsTo
+    public function petugas()
     {
-        return $this->belongsTo(Petugas::class);
+        return $this->belongsTo(Petugas::class, 'kode_petugas', 'kode_petugas');
     }
 
-    public function jenisTransaksi(): BelongsTo
+    public function jenisTransaksi()
     {
-        return $this->belongsTo(JenisTransaksi::class);
+        return $this->belongsTo(JenisTransaksi::class, 'kode_jenis', 'kode_jenis');
     }
 }

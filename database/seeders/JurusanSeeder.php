@@ -13,23 +13,8 @@ class JurusanSeeder extends Seeder
      */
     public function run(): void
     {
-        Jurusan::updateOrCreate(
-            ['kode_jurusan' => 'RPL'],
-            ['nama_jurusan' => 'Rekayasa Perangkat Lunak']
-        );
-
-        Jurusan::updateOrCreate(
-            ['kode_jurusan' => 'TKJ'],
-            ['nama_jurusan' => 'Teknik Komputer dan Jaringan']
-        );
-        Jurusan::updateOrCreate(
-            ['kode_jurusan' => 'AKT'],
-            ['nama_jurusan' => 'Akuntansi']
-        );
-
-        Jurusan::updateOrCreate(
-            ['kode_jurusan' => 'GURU'],
-            ['nama_jurusan' => 'Staf Guru & Pengajar']
-        );
+        Jurusan::create(['kode_jurusan' => 'RPL', 'nama_jurusan' => 'Rekayasa Perangkat Lunak']);
+        Jurusan::create(['kode_jurusan' => 'TKJ', 'nama_jurusan' => 'Teknik Komputer Jaringan']);
+        Jurusan::create(['kode_jurusan' => 'AK', 'nama_jurusan' => 'Akuntansi']);
     }
 }

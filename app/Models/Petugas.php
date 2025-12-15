@@ -6,19 +6,15 @@ use Illuminate\Database\Eloquent\Model;
 use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
-use Illuminate\Notifications\Notifiable;
 
 class Petugas extends Authenticatable
 {
-    use HasApiTokens, HasFactory, Notifiable;
+    use HasApiTokens, HasFactory;
     protected $table = 'petugas';
-    // kolom yang diisi
-    protected $fillable = [
-        'nama_petugas',
-        'username',
-        'password',
-        'role',
-    ];
+    protected $primaryKey = 'kode_petugas';
+    public $incrementing = false;
+    protected $keyType = 'string';
+    protected $guarded = [];
     // kolom yang disembunyikan
     protected $hidden = [
         'password',

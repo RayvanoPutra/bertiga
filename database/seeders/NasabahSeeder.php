@@ -1,58 +1,61 @@
 <?php
 
-// Buat file baru bernama NasabahSeeder.php
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
-use App\Models\Nasabah; // Pastikan model Nasabah sudah dibuat
+use App\Models\Nasabah;
 use Illuminate\Support\Facades\Hash;
 
 class NasabahSeeder extends Seeder
 {
     public function run(): void
     {
+        // 1. Nasabah Rian
         Nasabah::updateOrCreate(
-    ['username' => 'Rian'], // Kunci unik
-    [
-        'no_rekening' => '987654321', // <-- GANTI JADI BARU
-        'kelas_id' => 1,
-        'no_induk' => '1002', // <-- GANTI JADI BARU
-        'nama' => 'Riaann',
-        'email' => 'rian@email.com',
-        'jenis_rekening' => 'siswa',
-        'saldo' => 50000,
-        'password' => Hash::make('Rian123'),
-    ]
-);
-
-Nasabah::updateOrCreate(
-            ['username' => 'budi'], // Username login
+            ['username' => 'Rian'], 
             [
-                'no_rekening' => '123123123', // No Rekening unik
-                'kelas_id' => 2, // Pastikan kelas ID 2 ada (misal: XI TKJ 1)
-                'no_induk' => '2025001', // NIS unik
-                'nama' => 'Budi Santoso',
-                'email' => 'budi@sekolah.sch.id',
-                'no_telp' => '081234567890',
-                'alamat' => 'Jl. Merdeka No. 45, Jakarta',
+                'no_rekening' => '987654321',
+                // PERBAIKAN: Gunakan kode yang SAMA PERSIS dengan KelasSeeder Anda
+                'kode_kelas' => 'X-RPL-1-2425', 
+                'no_induk' => '1002',
+                'nama' => 'Riaann',
+                'email' => 'adriandzariatmaulana@gmail.com',
                 'jenis_rekening' => 'siswa',
-                'saldo' => 0, // Saldo awal 0 (biar bisa tes setor pertama & potong admin)
-                'password' => Hash::make('budi123'), // Password login
+                'saldo' => 50000,
+                'password' => Hash::make('Rian123'),
             ]
         );
-        
-        // Nasabah 3: Siti Aminah (BARU - Guru)
+
+        // 2. Nasabah Budi (Baru)
         Nasabah::updateOrCreate(
-            ['username' => 'siti_guru'], 
+            ['username' => 'budi'],
+            [
+                'no_rekening' => '123123123',
+                // PERBAIKAN: Gunakan kode yang SAMA PERSIS dengan KelasSeeder Anda
+                'kode_kelas' => 'XI-TKJ-2-2425', 
+                'no_induk' => '2025001',
+                'nama' => 'Budi Santoso',
+                'email' => 'adriancogans@gmail.com',
+                'no_telp' => '081234567890',
+                'jenis_rekening' => 'siswa',
+                'saldo' => 0, 
+                'password' => Hash::make('budi123'),
+            ]
+        );
+
+        // 3. Nasabah Siti (Guru) - Tidak perlu diubah karena kode_kelas null
+        Nasabah::updateOrCreate(
+            ['username' => 'siti_guru'],
             [
                 'no_rekening' => '999888777',
-                'kelas_id' => null, // Guru tidak punya kelas
-                'no_induk' => '19850101', // NIP
+                'kode_kelas' => null, 
+                'no_induk' => '19850101',
                 'nama' => 'Siti Aminah, S.Pd.',
                 'email' => 'siti@guru.sch.id',
+                'no_telp' => '081299988877', 
                 'jenis_rekening' => 'guru',
-                'saldo' => 1000000, 
-                'password' => Hash::make('guru123'), 
+                'saldo' => 1000000,
+                'password' => Hash::make('guru123'),
             ]
         );
     }
