@@ -16,7 +16,7 @@ class DashboardController extends Controller
         $today = Carbon::today();
 
         // 1. Jumlah Nasabah
-        $jumlahNasabah = Nasabah::count();
+        $jumlahNasabah = Nasabah::query()->count();
 
         // 2. Total Tabungan (Total Saldo dari semua Nasabah)
         // Pastikan kolom 'saldo' di tabel nasabah bertipe numerik (int/bigint)

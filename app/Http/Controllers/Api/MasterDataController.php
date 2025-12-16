@@ -123,37 +123,54 @@ class MasterDataController extends Controller
         return response()->json($tahunAjaran, 201);
     }
 
-    public function updateTahunAjaran(Request $request, $id)
-    {
-        $tahunAjaran = TahunAjaran::find($id);
-        if (!$tahunAjaran) {
-            return response()->json(['message' => 'Tahun Ajaran tidak ditemukan'], 404);
-        }
-        $validator = Validator::make($request->all(), [
-            'tahun_ajaran' => 'required|string|unique:tahun_ajaran,tahun_ajaran,' . $id,
-            'status' => 'required|in:aktif,nonaktif',
-        ]);
-        if ($validator->fails()) {
-            return response()->json($validator->errors(), 422);
-        }
-        $tahunAjaran->update($request->all());
-        return response()->json($tahunAjaran);
-    }
+    // app/Http/Controllers/Api/MasterDataController.php
 
-    public function deleteTahunAjaran($id)
-    {
-        $tahunAjaran = TahunAjaran::find($id);
-        if (!$tahunAjaran) {
-            return response()->json(['message' => 'Tahun Ajaran tidak ditemukan'], 404);
-        }
-        if ($tahunAjaran->kelas()->count() > 0) {
-            return response()->json([
-                'message' => 'Hapus Gagal: Tahun Ajaran ini masih digunakan oleh ' . $tahunAjaran->kelas()->count() . ' kelas.'
-            ], 409);
-        }
-        $tahunAjaran->delete();
-        return response()->json(['message' => 'Tahun Ajaran berhasil dihapus'], 200);
+public function updateTahunAjaran(Request $request, $kode_tahun_ajaran) // 1. Ganti $id dengan $kode_tahun_ajaran
+{
+    // 2. Gunakan find($pk) atau where()
+    $tahunAjaran = TahunAjaran::find($kode_tahun_ajaran); 
+    if (!$tahunAjaran) {
+        return response()->json(['message' => 'Tahun Ajaran tidak ditemukan'], 404);
     }
+    
+    $validator = Validator::make($request->all(), [
+        'tahun_ajaran' => [
+            'required',
+            'string',
+            // 3. Koreksi Validasi Unik:
+            // unique:tabel,kolom_unik,nilai_pengecualian,nama_kolom_pk
+            Rule::unique('tahun_ajaran', 'tahun_ajaran')
+                 ->ignore($kode_tahun_ajaran, 'kode_tahun_ajaran'), 
+        ],
+        'status' => 'required|in:aktif,nonaktif',
+    ]);
+    
+    if ($validator->fails()) {
+        return response()->json($validator->errors(), 422);
+    }
+    
+    $tahunAjaran->update($request->all());
+    return response()->json($tahunAjaran);
+}
+
+    // app/Http/Controllers/Api/MasterDataController.php
+
+public function deleteTahunAjaran($kode_tahun_ajaran) // Ganti $id dengan $kode_tahun_ajaran
+{
+    $tahunAjaran = TahunAjaran::find($kode_tahun_ajaran); // find() akan mencari berdasarkan kode_tahun_ajaran
+    if (!$tahunAjaran) {
+        return response()->json(['message' => 'Tahun Ajaran tidak ditemukan'], 404);
+    }
+    
+    if ($tahunAjaran->kelas()->count() > 0) {
+        return response()->json([
+            'message' => 'Hapus Gagal: Tahun Ajaran ini masih digunakan oleh ' . $tahunAjaran->kelas()->count() . ' kelas.'
+        ], 409);
+    }
+    
+    $tahunAjaran->delete();
+    return response()->json(['message' => 'Tahun Ajaran berhasil dihapus'], 200);
+}
     /**
      *ambil semua data kelas
      */
@@ -243,9 +260,9 @@ class MasterDataController extends Controller
         return response()->json($kelas, 201);
     }
     
-    public function updateKelas(Request $request, $id)
+    public function updateKelas(Request $request, $kode_kelas)
     {
-        $kelas = Kelas::find($id);
+        $kelas = Kelas::find($kode_kelas);
         if (!$kelas) {
             return response()->json(['message' => 'Kelas tidak ditemukan'], 404);
         }
@@ -260,7 +277,7 @@ class MasterDataController extends Controller
                     return $query
                         ->where('tahun_ajaran_id', $request->tahun_ajaran_id)
                         ->where('kode_jurusan', $request->kode_jurusan);
-                })->ignore($id), // 'ignore($id)' berarti aturan unik ini tidak berlaku untuk dirinya sendiri
+                })->ignore($kode_kelas), // 'ignore($id)' berarti aturan unik ini tidak berlaku untuk dirinya sendiri
             ],
         ], [
             'nama_kelas.unique' => 'Kombinasi Kelas, Jurusan, dan Tahun Ajaran ini sudah ada.'

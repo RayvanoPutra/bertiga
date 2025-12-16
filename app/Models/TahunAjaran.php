@@ -15,9 +15,11 @@ class TahunAjaran extends Model
     public $incrementing = false; 
     protected $keyType = 'string';
     protected $guarded = [];
+    
     public function kelas(): HasMany
     {
         // PK tabel ini 'id', FK di 'kelas' adalah 'tahun_ajaran_id' (standar Laravel)
-        return $this->hasMany(Kelas::class);
+        
+        return $this->hasMany(Kelas::class, 'kode_tahun_ajaran');
     }
 }

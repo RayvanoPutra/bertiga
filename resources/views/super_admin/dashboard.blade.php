@@ -39,7 +39,7 @@
                         <i class="bi bi-person-bounding-box metric-icon"></i>
                         <div class="metric-info">
                             <span class="metric-title">Jumlah Nasabah</span>
-                            <span class="metric-value">0</span>
+                            <span class="metric-value" id="jumlah-nasabah-value">0</span> 
                         </div>
                     </div>
                     

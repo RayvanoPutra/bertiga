@@ -1,4 +1,4 @@
-// ISI FILE public/js/tahun_ajaran.js
+// ISI FILE public/js/jurusan.js
 
 document.addEventListener('DOMContentLoaded', function() {
     const token = localStorage.getItem('sanctum_token');
@@ -8,50 +8,48 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // --- 1. REFERENSI ELEMEN & KONSTANTA ---
-    const API_BASE_URL = '/api/master/tahun-ajaran';
-    const tahunAjaranTableBody = document.querySelector('#tahunAjaranTable tbody');
+    const API_BASE_URL = '/api/master/jurusan';
+    const jurusanTableBody = document.querySelector('#jurusanTable tbody');
 
-    // Elemen Modal
-    const tahunAjaranModal = document.getElementById('tahunAjaranModal');
-    const tambahTahunAjaranBtn = document.getElementById('tambahTahunAjaranBtn');
-    const closeTahunAjaranModalBtn = document.getElementById('closeTahunAjaranModal');
-    const btnBatalTahunAjaran = document.getElementById('btnBatalTahunAjaran');
-    const tahunAjaranForm = document.getElementById('tahunAjaranForm');
-    const tahunAjaranModalTitle = document.getElementById('tahunAjaranModalTitle');
-    const tahunAjaranIdInput = document.getElementById('tahunAjaranId');
-    const inputTahunAjaran = document.getElementById('inputTahunAjaran');
-    const inputStatus = document.getElementById('inputStatus');
-    const tahunAjaranFormMessage = document.getElementById('tahunAjaranFormMessage');
+    // Elemen Modal Jurusan
+    const jurusanModal = document.getElementById('jurusanModal');
+    const tambahJurusanBtn = document.getElementById('tambahJurusanBtn');
+    const closeJurusanModalBtn = document.getElementById('closeJurusanModal');
+    const btnBatalJurusan = document.getElementById('btnBatalJurusan');
+    const jurusanForm = document.getElementById('jurusanForm');
+    const jurusanModalTitle = document.getElementById('jurusanModalTitle');
+    const jurusanIdInput = document.getElementById('jurusanId');
+    const inputNamaJurusan = document.getElementById('inputNamaJurusan');
+    const jurusanFormMessage = document.getElementById('jurusanFormMessage');
+    const modalJurusanTahunAjaran = document.getElementById('modalJurusanTahunAjaran');
     const logoutButton = document.getElementById('logoutButton');
 
 
-    // --- 2. FUNGSI UTILITY & HANDLER ---
-
+    // --- FUNGSI UTILITY ---
     function handleLogout() {
         localStorage.removeItem('sanctum_token');
         window.location.href = '/login';
     }
 
     function openModal(mode = 'create', data = {}) {
-        tahunAjaranForm.reset();
-        tahunAjaranFormMessage.style.display = 'none';
+        jurusanForm.reset();
+        jurusanFormMessage.style.display = 'none';
 
         if (mode === 'create') {
-            tahunAjaranModalTitle.textContent = 'Tambah Tahun Ajaran Baru';
-            tahunAjaranIdInput.value = '';
-            inputStatus.value = 'nonaktif';
-        } else if (mode === 'edit' && data.kode_tahun_ajaran) {
-            tahunAjaranModalTitle.textContent = 'Edit Tahun Ajaran: ' + data.kode_tahun_ajaran;
-            tahunAjaranIdInput.value = data.kode_tahun_ajaran;
-            inputTahunAjaran.value = data.tahun_ajaran;
-            inputStatus.value = data.status;
+            jurusanModalTitle.textContent = 'Tambah Jurusan Baru';
+            jurusanIdInput.value = '';
+        } else if (mode === 'edit' && data.kode_jurusan) {
+            jurusanModalTitle.textContent = 'Edit Jurusan: ' + data.kode_jurusan;
+            jurusanIdInput.value = data.kode_jurusan;
+            inputNamaJurusan.value = data.nama_jurusan;
+            modalJurusanTahunAjaran.value = data.kode_tahun_ajaran;
         }
-        tahunAjaranModal.style.display = 'block';
+        jurusanModal.style.display = 'block';
     }
 
     function closeModal() {
-        tahunAjaranModal.style.display = 'none';
-        tahunAjaranFormMessage.style.display = 'none';
+        jurusanModal.style.display = 'none';
+        jurusanFormMessage.style.display = 'none';
     }
 
     function showMessage(element, message, type) {
@@ -60,40 +58,38 @@ document.addEventListener('DOMContentLoaded', function() {
         element.style.display = 'block';
     }
 
-    // --- 3. FUNGSI RENDER TABEL ---
-
-    function renderTable(taList) {
-        tahunAjaranTableBody.innerHTML = '';
-        if (taList.length === 0) {
-            tahunAjaranTableBody.innerHTML =
-                '<tr><td colspan="4" style="text-align: center; padding: 20px; font-style: italic;">Tidak ada data Tahun Ajaran yang ditemukan.</td></tr>';
+    // --- FUNGSI RENDER TABEL JURUSAN ---
+    function renderJurusanTable(jurusanList) {
+        jurusanTableBody.innerHTML = '';
+        if (jurusanList.length === 0) {
+            jurusanTableBody.innerHTML =
+                '<tr><td colspan="3" style="text-align: center; padding: 20px; font-style: italic;">Tidak ada data Jurusan yang ditemukan.</td></tr>';
             return;
         }
 
-        taList.forEach((ta, index) => {
-            const row = tahunAjaranTableBody.insertRow();
+        jurusanList.forEach((jurusan, index) => {
+            const row = jurusanTableBody.insertRow();
             row.innerHTML = `
                 <td>${index + 1}</td>
-                <td>${ta.tahun_ajaran}</td>
-                <td><span class="badge status-${ta.status}">${ta.status.toUpperCase()}</span></td>
+                <td>${jurusan.nama_jurusan} (${jurusan.tahun_ajaran ? jurusan.tahun_ajaran.tahun_ajaran : '-'})</td>
                 <td>
-                    <button class="btn-sm btn-warning edit-btn" data-id="${ta.kode_tahun_ajaran}" data-ta="${ta.tahun_ajaran}" data-status="${ta.status}">
+                    <button class="btn-sm btn-warning edit-btn" data-id="${jurusan.kode_jurusan}" data-name="${jurusan.nama_jurusan}" data-ta-code="${jurusan.kode_tahun_ajaran}">
                         <i class="bi bi-pencil"></i> Edit
                     </button>
-                    <button class="btn-sm btn-danger delete-btn" data-id="${ta.kode_tahun_ajaran}">
+                    <button class="btn-sm btn-danger delete-btn" data-id="${jurusan.kode_jurusan}">
                         <i class="bi bi-trash"></i> Hapus
                     </button>
                 </td>
             `;
         });
-        attachTAActionListeners();
+        attachJurusanActionListeners(); // <-- Panggil listener setelah render
     }
 
 
-    // --- 4. FUNGSI FETCH DATA TAHUN AJARAN (READ) ---
-    async function fetchTahunAjaran() {
-        tahunAjaranTableBody.innerHTML =
-            '<tr><td colspan="4" style="text-align: center; color: #555;">⏳ Memuat data...</td></tr>';
+    // --- FUNGSI FETCH DATA JURUSAN (READ) ---
+    async function fetchJurusan() {
+        jurusanTableBody.innerHTML =
+            '<tr><td colspan="3" style="text-align: center; color: #555;">⏳ Memuat data...</td></tr>';
 
         try {
             const response = await fetch(API_BASE_URL, {
@@ -105,35 +101,53 @@ document.addEventListener('DOMContentLoaded', function() {
 
             if (response.status === 401) throw new Error('Unauthorized');
             
-            const taList = await response.json();
-            // Asumsi response API adalah array data Tahun Ajaran
-            renderTable(taList.data || taList); 
+            const result = await response.json();
+            renderJurusanTable(result.data || result); 
 
         } catch (error) {
-            console.error('Gagal mengambil data Tahun Ajaran:', error);
-            tahunAjaranTableBody.innerHTML =
-                '<tr><td colspan="4" style="color: var(--danger-color); text-align: center;">❌ Gagal memuat data. Cek koneksi API.</td></tr>';
+            console.error('Gagal mengambil data Jurusan:', error);
+            jurusanTableBody.innerHTML =
+                '<tr><td colspan="3" style="color: var(--danger-color); text-align: center;">❌ Gagal memuat data. Cek koneksi API.</td></tr>';
             if (error.message === 'Unauthorized') handleLogout();
+        }
+    }
+    
+    // --- FUNGSI FETCH TAHUN AJARAN UNTUK SELECT MODAL ---
+    async function fetchTahunAjaranForSelect() {
+        try {
+            const response = await fetch('/api/master/tahun-ajaran', {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Accept': 'application/json'
+                }
+            });
+            const result = await response.json();
+            const taList = result.data || result;
+            
+            modalJurusanTahunAjaran.innerHTML = '<option value="">Pilih Tahun Ajaran</option>';
+            taList.forEach(ta => {
+                const option = document.createElement('option');
+                option.value = ta.kode_tahun_ajaran;
+                option.textContent = `${ta.tahun_ajaran} (${ta.status.toUpperCase()})`;
+                modalJurusanTahunAjaran.appendChild(option);
+            });
+        } catch (error) {
+             console.error('Gagal memuat pilihan Tahun Ajaran:', error);
         }
     }
 
 
-    // --- 5. SUBMIT FORM KE API (CREATE/UPDATE) ---
-    tahunAjaranForm.addEventListener('submit', async function(e) {
+    // --- FUNGSI SUBMIT FORM KE API (CREATE/UPDATE) ---
+    jurusanForm.addEventListener('submit', async function(e) {
         e.preventDefault();
-        tahunAjaranFormMessage.style.display = 'none';
+        jurusanFormMessage.style.display = 'none';
 
-        const kodeTA = tahunAjaranIdInput.value;
-        const method = kodeTA ? 'PUT' : 'POST';
-        const url = kodeTA ? `${API_BASE_URL}/${kodeTA}` : API_BASE_URL;
+        const kodeJurusan = jurusanIdInput.value;
+        const method = kodeJurusan ? 'PUT' : 'POST';
+        const url = kodeJurusan ? `${API_BASE_URL}/${kodeJurusan}` : API_BASE_URL;
 
-        const formData = new FormData(tahunAjaranForm);
+        const formData = new FormData(jurusanForm);
         const data = Object.fromEntries(formData.entries());
-
-        if (!kodeTA) {
-            // Ini hanya contoh, idealnya kode dibuat di backend
-            data['kode_tahun_ajaran'] = data.tahun_ajaran.replace('/', '-'); 
-        }
 
         try {
             const response = await fetch(url, {
@@ -155,28 +169,25 @@ document.addEventListener('DOMContentLoaded', function() {
                 } else if (result.message) {
                     errorMessage = result.message;
                 }
-                showMessage(tahunAjaranFormMessage, errorMessage, 'error');
+                showMessage(jurusanFormMessage, errorMessage, 'error');
                 return;
             }
 
-            showMessage(tahunAjaranFormMessage, `✅ Tahun Ajaran berhasil ${kodeTA ? 'diperbarui' : 'ditambahkan'}!`,
-                'success');
+            showMessage(jurusanFormMessage, `✅ Jurusan berhasil ${kodeJurusan ? 'diperbarui' : 'ditambahkan'}!`, 'success');
             setTimeout(() => {
                 closeModal();
-                fetchTahunAjaran();
+                fetchJurusan(); // Refresh data
             }, 1500);
 
         } catch (error) {
             console.error('API Error:', error);
-            showMessage(tahunAjaranFormMessage, 'Terjadi kesalahan jaringan atau server tidak merespons.', 'error');
+            showMessage(jurusanFormMessage, 'Terjadi kesalahan jaringan atau server tidak merespons.', 'error');
         }
     });
 
-
-    // --- 6. FUNGSI ACTION LISTENERS (Hapus & Edit) ---
-
-    async function handleTADelete(kode) {
-        if (!confirm(`❓ Apakah Anda yakin ingin menghapus Tahun Ajaran ${kode}? Aksi ini tidak dapat dibatalkan.`)) {
+    // --- FUNGSI HAPUS (DELETE) ---
+    async function handleJurusanDelete(kode) {
+        if (!confirm(`❓ Apakah Anda yakin ingin menghapus Jurusan ${kode}? Aksi ini tidak dapat dibatalkan.`)) {
             return;
         }
 
@@ -197,8 +208,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
 
-            alert('✅ Tahun Ajaran berhasil dihapus!');
-            fetchTahunAjaran();
+            alert('✅ Jurusan berhasil dihapus!');
+            fetchJurusan();
 
         } catch (error) {
             console.error('Delete API Error:', error);
@@ -206,7 +217,9 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    function attachTAActionListeners() {
+
+    // --- FUNGSI ACTION LISTENERS (Hapus & Edit) ---
+    function attachJurusanActionListeners() {
         // Edit Handler
         document.querySelectorAll('.edit-btn').forEach(button => {
             button.removeEventListener('click', handleEditClick);
@@ -215,12 +228,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
         function handleEditClick(e) {
             const kode = e.currentTarget.getAttribute('data-id');
-            const ta = e.currentTarget.getAttribute('data-ta');
-            const status = e.currentTarget.getAttribute('data-status');
+            const nama = e.currentTarget.getAttribute('data-name');
+            const taCode = e.currentTarget.getAttribute('data-ta-code');
+            
             openModal('edit', {
-                kode_tahun_ajaran: kode,
-                tahun_ajaran: ta,
-                status: status
+                kode_jurusan: kode,
+                nama_jurusan: nama,
+                kode_tahun_ajaran: taCode
             });
         }
 
@@ -232,60 +246,44 @@ document.addEventListener('DOMContentLoaded', function() {
 
         function handleDeleteClick(e) {
             const kode = e.currentTarget.getAttribute('data-id');
-            handleTADelete(kode);
+            handleJurusanDelete(kode);
         }
     }
 
 
-    // --- 7. INITIAL CALLS & EVENT LISTENERS LAINNYA ---
+    // --- INITIAL CALLS & EVENT LISTENERS LAINNYA ---
+    fetchJurusan();
+    fetchTahunAjaranForSelect();
 
-    fetchTahunAjaran();
+    tambahJurusanBtn.addEventListener('click', () => openModal('create'));
+    closeJurusanModalBtn.addEventListener('click', closeModal);
+    btnBatalJurusan.addEventListener('click', closeModal);
 
-    tambahTahunAjaranBtn.addEventListener('click', () => openModal('create'));
-    closeTahunAjaranModalBtn.addEventListener('click', closeModal);
-    btnBatalTahunAjaran.addEventListener('click', closeModal);
-    
+    // Event listener untuk menutup modal saat klik di luar area
     window.addEventListener('click', function(event) {
-        if (event.target === tahunAjaranModal) {
+        if (event.target === jurusanModal) {
             closeModal();
         }
     });
-
-    // Logika Sidebar Toggle
-    const appContainer = document.getElementById('app-container');
-    const sidebarToggler = document.getElementById('sidebar-toggler');
-    const togglerIcon = sidebarToggler ? sidebarToggler.querySelector('i') : null;
-
-    if (sidebarToggler && appContainer && togglerIcon) {
-        sidebarToggler.addEventListener('click', function() {
-            appContainer.classList.toggle('minimized');
-            if (appContainer.classList.contains('minimized')) {
-                togglerIcon.classList.replace('bi-arrow-left-square-fill', 'bi-arrow-right-square-fill');
-            } else {
-                togglerIcon.classList.replace('bi-arrow-right-square-fill', 'bi-arrow-left-square-fill');
-            }
-        });
-    }
 
     // Logika Logout
     if (logoutButton) {
         logoutButton.addEventListener('click', async function(e) {
             e.preventDefault();
             if (confirm('Anda yakin ingin keluar?')) {
-                 try {
-                     await fetch('/api/logout', {
-                         method: 'POST',
-                         headers: {
-                             'Authorization': `Bearer ${token}`
-                         }
-                     });
-                 } catch (err) {
-                     console.error('Logout API call failed, but clearing local storage.');
-                 } finally {
-                     handleLogout();
-                 }
+                try {
+                    await fetch('/api/logout', {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        }
+                    });
+                } catch (err) {
+                    console.error('Logout API call failed, but clearing local storage.');
+                } finally {
+                    handleLogout();
+                }
             }
         });
     }
-
 });
