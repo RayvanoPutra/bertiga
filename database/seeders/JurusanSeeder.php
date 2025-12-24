@@ -12,9 +12,25 @@ class JurusanSeeder extends Seeder
      * Run the database seeds.
      */
     public function run(): void
-    {
-        Jurusan::create(['kode_jurusan' => 'RPL', 'nama_jurusan' => 'Rekayasa Perangkat Lunak']);
-        Jurusan::create(['kode_jurusan' => 'TKJ', 'nama_jurusan' => 'Teknik Komputer Jaringan']);
-        Jurusan::create(['kode_jurusan' => 'AK', 'nama_jurusan' => 'Akuntansi']);
-    }
+{
+    // Pastikan kode_tahun_ajaran pakai strip '-' (TA-2425) agar sinkron
+    \App\Models\Jurusan::create([
+        'kode_jurusan' => 'RPL',
+        'nama_jurusan' => 'Rekayasa Perangkat Lunak',
+        'kode_tahun_ajaran' => 'TA-2425'
+    ]);
+
+    \App\Models\Jurusan::create([
+        'kode_jurusan' => 'AKL',
+        'nama_jurusan' => 'Akuntansi Keuangan dan Lembaga',
+        'kode_tahun_ajaran' => 'TA-2425'
+    ]);
+
+    // TAMBAHKAN INI AGAR TKJ TERDAFTAR
+    \App\Models\Jurusan::create([
+        'kode_jurusan' => 'TKJ',
+        'nama_jurusan' => 'Teknik Komputer dan Jaringan',
+        'kode_tahun_ajaran' => 'TA-2425'
+    ]);
+}
 }

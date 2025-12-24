@@ -7,199 +7,257 @@ use Illuminate\Http\Request;
 use App\Models\Transaksi;
 use App\Models\Nasabah;
 use App\Models\JenisTransaksi;
+use App\Models\Pengaturan;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
 
 class TransaksiController extends Controller
 {
-    public function requestTransaksi(Request $request)
+    // --- REQUEST SETOR (Untuk Android) ---
+    public function requestSetor(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'kode_jenis' => 'required|in:SETOR,TARIK',
             'jumlah' => 'required|integer|min:1000',
-            'keterangan_nasabah' => 'nullable|required_if:kode_jenis,TARIK|string|max:100',
-        ], [
-            'keterangan_nasabah.required_if' => 'Keterangan wajib diisi untuk penarikan.'
         ]);
-        if ($validator->fails()) {
-            return response()->json($validator->errors(), 422);
-        }
+        if ($validator->fails()) return response()->json($validator->errors(), 422);
 
-        //ambil data nasabah yg sdg login melalui token
         $nasabah = $request->user();
-        // 3. Cek Saldo (Khusus Tarik Tunai)
-        if ($request->kode_jenis == 'TARIK' && $nasabah->saldo < $request->jumlah) {
-            return response()->json(['message' => 'Saldo tidak mencukupi.'], 422);
-        }
-        // generate kode_transaksi
-        $id_transaksi = 'TRX-' . date('Ymd') . '-' . rand(1000, 9999);
+        
+        // Cari Jenis Transaksi (SETOR)
+        $jenisSetor = JenisTransaksi::where('nama_jenis', 'Setor Tunai')->firstOrFail();
 
-        // 5. Simpan ke Database (Status: Pending)
+        // Ambil Data Snapshot (Kelas & Jurusan saat ini)
+        $kelas = $nasabah->kelas;
+        $jurusan = $kelas ? $kelas->jurusan : null;
+
         $transaksi = Transaksi::create([
-            'kode_transaksi' => $id_transaksi,
+            'kode_transaksi' => 'TRX-' . time() . '-' . rand(100, 999),
             'no_rekening' => $nasabah->no_rekening,
+            'kode_jenis' => $jenisSetor->kode_jenis, // String
             'kode_petugas' => null,
-            'kode_jenis' => $request->kode_jenis,
-            'tgl_transaksi' => now(),
+            'tgl_transaksi' => null, // null karena belum disetujui
             'jumlah' => $request->jumlah,
             'status' => 'pending',
-            'keterangan_nasabah' => $request->keterangan_nasabah
+            'keterangan_nasabah' => 'Request Setor Tunai',
+            
+            // --- DATA HISTORIS (PENTING UNTUK LAPORAN) ---
+            'nama_saat_transaksi' => $nasabah->nama,
+            'kelas_saat_transaksi' => $kelas ? $kelas->nama_kelas : null,
+            'jurusan_saat_transaksi' => $jurusan ? $jurusan->nama_jurusan : null,
+            'saldo_sebelum' => $nasabah->saldo, // Simpan saldo saat request
+            'saldo_setelah' => 0, // Akan diisi saat approve
         ]);
+
         return response()->json([
-            'message' => 'Permintaan berhasil dikirim. Menunggu konfirmasi Petugas.',
+            'message' => 'Transaksi berhasil dibuat dan menunggu disetujui petugas.',
             'data' => $transaksi
         ], 201);
     }
 
-    // public function requestTarik(Request $request)
-    // {
-    //     $validator = Validator::make($request->all(), [
-    //         'jumlah' => 'required|integer|min:1000',
-    //         'keterangan_nasabah' => 'required|string|min:5',
-    //     ]);
-    //     if ($validator->fails()) {
-    //         return response()->json($validator->errors(), 422);
-    //     }
-    //     $nasabah = $request->user();
+    // --- REQUEST TARIK (Untuk Android) ---
+    public function requestTarik(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'jumlah' => 'required|integer|min:1000',
+            'keterangan_nasabah' => 'required|string|min:5',
+        ]);
+        if ($validator->fails()) return response()->json($validator->errors(), 422);
 
-    //     //cek saldo asli
-    //     if ($nasabah->saldo < $request->jumlah) {
-    //         return response()->json(['message' => 'Saldo Anda tidak mencukupi untuk melakukan penarikan ini.'], 422);
-    //     }
+        $nasabah = $request->user();
 
-    //     $kelas = $nasabah->kelas;
-    //     $jurusan = $kelas ? $kelas->jurusan : null;
-    //     $jenisTarik = JenisTransaksi::where('nama_jenis', 'Tarik Tunai')->firstOrFail();
+        // Cek Saldo
+        if ($nasabah->saldo < $request->jumlah) {
+            return response()->json(['message' => 'Saldo Anda tidak mencukupi.'], 422);
+        }
 
-    //     $transaksi = Transaksi::create([
-    //         'no_rekening' => $nasabah->no_rekening,
-    //         'jenis_transaksi_id' => $jenisTarik->id,
-    //         'jumlah' => $request->jumlah,
-    //         'status' => 'pending',
-    //         'keterangan_nasabah' => $request->keterangan_nasabah,
-    //         'nama_saat_transaksi' => $nasabah->nama,
-    //         'kelas_saat_transaksi' => $kelas ? $kelas->nama_kelas : null,
-    //         'jurusan_saat_transaksi' => $jurusan ? $jurusan->nama_jurusan : null,
-    //         'saldo_sebelum' => 0,
-    //         'saldo_setelah' => 0,
-    //     ]);
+        $jenisTarik = JenisTransaksi::where('nama_jenis', 'Tarik Tunai')->firstOrFail();
+        
+        // Ambil Data Snapshot
+        $kelas = $nasabah->kelas;
+        $jurusan = $kelas ? $kelas->jurusan : null;
 
-    //     return response()->json([
-    //         'message' => 'Permintaan tarik tunai berhasil dibuat dan menunggu persetujuan.',
-    //         'data' => $transaksi
-    //     ], 201);
-    // }
+        $transaksi = Transaksi::create([
+            'kode_transaksi' => 'TRX-' . time() . '-' . rand(100, 999),
+            'no_rekening' => $nasabah->no_rekening,
+            'kode_jenis' => $jenisTarik->kode_jenis,
+            'kode_petugas' => null,
+            'jumlah' => $request->jumlah,
+            'status' => 'pending',
+            'keterangan_nasabah' => $request->keterangan_nasabah,
+            'tgl_transaksi' => null,
+            
+            // --- DATA HISTORIS (PENTING) ---
+            'nama_saat_transaksi' => $nasabah->nama,
+            'kelas_saat_transaksi' => $kelas ? $kelas->nama_kelas : null,
+            'jurusan_saat_transaksi' => $jurusan ? $jurusan->nama_jurusan : null,
+            'saldo_sebelum' => $nasabah->saldo,
+            'saldo_setelah' => 0,
+        ]);
 
-    //method petugas di transaksi
+        return response()->json([
+            'message' => 'Permintaan tarik tunai berhasil dibuat.',
+            'data' => $transaksi
+        ], 201);
+    }
+
+    // --- APPROVE (Untuk Web Petugas) ---
     public function approve(Request $request, $kode_transaksi)
     {
-        //Cari Transaksi
-        $transaksi = Transaksi::find($kode_transaksi);
-
-        if (!$transaksi) {
-            return response()->json(['message' => 'Transaksi tidak ditemukan'], 404);
-        }
-
-        // Cek status
-        if ($transaksi->status != 'pending') {
-            return response()->json(['message' => 'Transaksi ini sudah diproses.'], 422);
-        }
-
-        //PROSES PERUBAHAN SALDO (Atomic Transaction)
         try {
-            DB::beginTransaction();
+            DB::transaction(function () use ($request, $kode_transaksi) {
 
-            // A. Update Status Transaksi
-            $transaksi->update([
-                'status' => 'success', // 
-                'kode_petugas' => $request->user()->kode_petugas 
-            ]);
+                // 1. Ambil Transaksi
+                $transaksi = Transaksi::with('jenisTransaksi')
+                    ->where('kode_transaksi', $kode_transaksi)
+                    ->firstOrFail();
 
-            
-            $nasabah = Nasabah::where('no_rekening', $transaksi->no_rekening)
-                ->lockForUpdate()
-                ->first();
-
-            // Cek Jenis: SETOR atau TARIK?
-            if ($transaksi->kode_jenis == 'SETOR') {
-                $nasabah->saldo = $nasabah->saldo + $transaksi->jumlah;
-            } else {
-                // TARIK (Cek saldo lagi untuk keamanan ganda)
-                if ($nasabah->saldo < $transaksi->jumlah) {
-                    throw new \Exception("Saldo nasabah tidak cukup saat diproses.");
+                if ($transaksi->status != 'pending') {
+                    throw ValidationException::withMessages(['status' => 'Transaksi ini sudah diproses.']);
                 }
-                $nasabah->saldo = $nasabah->saldo - $transaksi->jumlah;
-            }
 
-            $nasabah->save(); // Simpan saldo baru
+                // 2. Kunci Data Nasabah
+                $nasabah = Nasabah::where('no_rekening', $transaksi->no_rekening)
+                    ->lockForUpdate()
+                    ->firstOrFail();
 
-            DB::commit(); // Simpan permanen
+                $saldo_sebelum = $nasabah->saldo;
+                $saldo_setelah = 0;
+                
+                // Ambil Nama Jenis Transaksi untuk logika
+                $jenisNama = $transaksi->jenisTransaksi->nama_jenis; 
 
-            return response()->json(['message' => 'Transaksi Disetujui. Saldo Nasabah Berhasil Diupdate.']);
+                // 3. Hitung Saldo
+                if ($jenisNama == 'Setor Tunai') {
+                    $saldo_setelah = $saldo_sebelum + $transaksi->jumlah;
+                } elseif ($jenisNama == 'Tarik Tunai') {
+                    if ($saldo_sebelum < $transaksi->jumlah) {
+                        throw ValidationException::withMessages(['saldo' => 'Saldo nasabah tidak mencukupi saat diproses.']);
+                    }
+                    $saldo_setelah = $saldo_sebelum - $transaksi->jumlah;
+                } else {
+                    throw new \Exception("Jenis transaksi tidak valid untuk approval manual.");
+                }
+
+                // 4. Update Nasabah
+                $nasabah->update(['saldo' => $saldo_setelah]);
+
+                // 5. Update Transaksi
+                $transaksi->update([
+                    'status' => 'success',
+                    'kode_petugas' => $request->user()->kode_petugas, // Simpan siapa yg approve
+                    'tgl_transaksi' => now(),
+                    'saldo_sebelum' => $saldo_sebelum, // Simpan snapshot saldo
+                    'saldo_setelah' => $saldo_setelah,
+                ]);
+
+                // ============================================================
+                // 6. LOGIKA AUTO-DEBIT BIAYA ADMIN (Khusus Setor Tunai Siswa)
+                // ============================================================
+                
+                if ($jenisNama == 'Setor Tunai' && $nasabah->jenis_rekening == 'siswa') {
+                    
+                    // A. Ambil nominal biaya dari Pengaturan
+                    $settingBiaya = Pengaturan::where('nama_pengaturan', 'biaya_admin')->first(); 
+                    $nominalBiaya = $settingBiaya ? (int)$settingBiaya->nilai : 12000; 
+
+                    // B. Cek apakah sudah bayar tahun ini?
+                    $tahunIni = date('Y');
+                    $sudahBayar = Transaksi::where('no_rekening', $nasabah->no_rekening)
+                        ->whereHas('jenisTransaksi', function($q) {
+                            $q->where('nama_jenis', 'Biaya Admin');
+                        })
+                        ->whereYear('created_at', $tahunIni)
+                        ->exists();
+
+                    // C. Eksekusi Potong Jika Belum Bayar
+                    if (!$sudahBayar && $nasabah->saldo >= $nominalBiaya) {
+                        
+                        $jenisAdmin = JenisTransaksi::where('nama_jenis', 'Biaya Admin')->first();
+
+                        if ($jenisAdmin) {
+                            $saldo_skrg = $nasabah->saldo;
+                            $saldo_baru = $saldo_skrg - $nominalBiaya;
+
+                            // Kurangi Saldo
+                            $nasabah->update(['saldo' => $saldo_baru]);
+
+                            // Buat Transaksi Admin (Langsung Success)
+                            Transaksi::create([
+                                'kode_transaksi' => 'ADM-' . time() . '-' . rand(100, 999),
+                                'no_rekening' => $nasabah->no_rekening,
+                                'kode_jenis' => $jenisAdmin->kode_jenis,
+                                'kode_petugas' => $request->user()->kode_petugas,
+                                'tgl_transaksi' => now(),
+                                'jumlah' => $nominalBiaya,
+                                'status' => 'success', 
+                                'keterangan_nasabah' => 'Potongan Biaya Admin Tahun ' . $tahunIni,
+                                
+                                // Snapshot Historis
+                                'nama_saat_transaksi' => $nasabah->nama,
+                                'kelas_saat_transaksi' => $nasabah->kelas ? $nasabah->kelas->nama_kelas : null,
+                                'jurusan_saat_transaksi' => $nasabah->kelas && $nasabah->kelas->jurusan ? $nasabah->kelas->jurusan->nama_jurusan : null,
+                                'saldo_sebelum' => $saldo_skrg,
+                                'saldo_setelah' => $saldo_baru,
+                            ]);
+                        }
+                    }
+                }
+            });
+        } catch (ValidationException $e) {
+            return response()->json(['message' => 'Gagal: ' . $e->getMessage(), 'errors' => $e->errors()], 422);
         } catch (\Exception $e) {
-            DB::rollback(); // Batalkan jika error
-            return response()->json(['message' => 'Gagal memproses: ' . $e->getMessage()], 500);
+            return response()->json(['message' => 'Error Server: ' . $e->getMessage()], 500);
         }
+
+        return response()->json(['message' => 'Transaksi berhasil disetujui.']);
     }
 
-    public function getPending()
-    {
-        // Pastikan relasi di Model Transaksi namanya 'nasabah' dan 'jenisTransaksi'
-        // Jika nama relasi beda, sesuaikan di sini (misal: 'jenis_transaksi')
-        $data = Transaksi::with(['nasabah', 'jenisTransaksi'])
-            ->where('status', 'pending')
-            ->orderBy('tgl_transaksi', 'asc')
-            ->get();
-
-        return response()->json($data);
-    }
-
-
+    // --- REJECT ---
     public function reject(Request $request, $kode_transaksi)
     {
-        $transaksi = Transaksi::find($kode_transaksi);
+        $transaksi = Transaksi::where('kode_transaksi', $kode_transaksi)
+            ->where('status', 'pending')
+            ->firstOrFail();
 
-        if (!$transaksi) {
-            return response()->json(['message' => 'Transaksi tidak ditemukan'], 404);
-        }
-
-        if ($transaksi->status != 'pending') {
-            return response()->json(['message' => 'Transaksi ini sudah diproses.'], 422);
-        }
-
-        // Update status jadi rejected/gagal
         $transaksi->update([
-            'status' => 'rejected', // atau 'gagal'
+            'status' => 'rejected',
             'kode_petugas' => $request->user()->kode_petugas,
-            'tgl_transaksi' => now() // Update waktu penolakan
+            'tgl_transaksi' => now(),
         ]);
 
         return response()->json(['message' => 'Transaksi berhasil ditolak.']);
     }
 
-    //Riwayat Transaksi Nasabah 
-    public function getHistoryNasabah(Request $request)
+    // --- GET PENDING ---
+    public function getPending(Request $request)
     {
-        $nasabah = $request->user(); // Ambil user login
-
-        $history = Transaksi::with('jenisTransaksi') // Join ke jenis
-            ->where('no_rekening', $nasabah->no_rekening) // Filter punya dia
-            ->where('status', '!=', 'pending') // Hanya yang sudah selesai (berhasil/gagal)
-            ->orderBy('tgl_transaksi', 'desc') // Yang terbaru di atas
+        $pending = Transaksi::with(['nasabah', 'jenisTransaksi'])
+            ->where('status', 'pending')
+            ->orderBy('created_at', 'asc')
             ->get();
-
-        return response()->json($history);
+        return response()->json($pending);
     }
 
-    //Riwayat Semua Transaksi (Laporan Harian/Bulanan)
-    public function getHistoryAdmin()
+    // --- GET HISTORY NASABAH ---
+    public function getHistoryNasabah(Request $request)
     {
-        $history = Transaksi::with(['nasabah', 'jenisTransaksi', 'petugas'])
-            ->where('status', '!=', 'pending') // Jangan tampilkan yang pending
+        $nasabah = $request->user();
+        $history = Transaksi::with('jenisTransaksi')
+            ->where('no_rekening', $nasabah->no_rekening)
+            ->where('status', '!=', 'pending')
             ->orderBy('tgl_transaksi', 'desc')
             ->get();
-
+        return response()->json($history);
+    }
+    
+    // --- GET HISTORY ADMIN ---
+    public function getHistoryAdmin()
+    {
+         $history = Transaksi::with(['nasabah', 'jenisTransaksi', 'petugas'])
+            ->where('status', '!=', 'pending')
+            ->orderBy('tgl_transaksi', 'desc')
+            ->get();
         return response()->json($history);
     }
 }

@@ -7,236 +7,350 @@ use Illuminate\Http\Request;
 use App\Models\Jurusan;
 use App\Models\TahunAjaran;
 use App\Models\Kelas;
+use App\Models\Petugas;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Hash;
 
 class MasterDataController extends Controller
 {
+    // ==========================================
+    // JURUSAN
+    // ==========================================
 
-    /**
-     *ambil semua data jurusan.
-     */
     public function getJurusan()
-    {
-        //ambil data jurusan 
-        $data = Jurusan::orderBy('kode_jurusan', 'asc')->get();
-        return response()->json($data);
+{
+    // Cukup panggil Jurusan::all() atau Jurusan::get()
+    return response()->json(Jurusan::all());
+}
+
+    // app/Http/Controllers/Api/MasterDataController.php
+
+public function storeJurusan(Request $request)
+{
+    // HAPUS 'kode_tahun_ajaran' dari sini
+    $validator = Validator::make($request->all(), [
+        'kode_jurusan' => 'required|string|unique:jurusan,kode_jurusan',
+        'nama_jurusan' => 'required|string',
+    ]);
+
+    if ($validator->fails()) {
+        return response()->json(['message' => 'Validasi Gagal', 'errors' => $validator->errors()], 422);
     }
 
-    /**
-     *simpan data jurusan baru
-     */
-    public function storeJurusan(Request $request)
+    try {
+        $jurusan = Jurusan::create([
+            'kode_jurusan' => strtoupper($request->kode_jurusan),
+            'nama_jurusan' => $request->nama_jurusan
+            // JANGAN masukkan kode_tahun_ajaran di sini
+        ]);
+
+        return response()->json(['message' => 'Jurusan berhasil disimpan', 'data' => $jurusan], 201);
+    } catch (\Exception $e) {
+        return response()->json(['message' => 'Gagal: ' . $e->getMessage()], 500);
+    }
+}
+
+    public function updateJurusan(Request $request, $kode_jurusan)
     {
-        //validasi input
+        $jurusan = Jurusan::where('kode_jurusan', $kode_jurusan)->first();
+        if (!$jurusan) return response()->json(['message' => 'Jurusan tidak ditemukan'], 404);
+
         $validator = Validator::make($request->all(), [
-            'kode_jurusan' => 'required|string|unique:jurusan,kode_jurusan',
             'nama_jurusan' => 'required|string',
         ]);
 
-        if ($validator->fails()) {
-            return response()->json($validator->errors(), 422);
+        if ($validator->fails()) return response()->json($validator->errors(), 422);
+
+        $jurusan->update($request->only('nama_jurusan'));
+        return response()->json(['message' => 'Jurusan Berhasil Diupdate', 'data' => $jurusan]);
+    }
+
+    public function deleteJurusan($kode_jurusan)
+    {
+        $jurusan = Jurusan::where('kode_jurusan', $kode_jurusan)->first();
+        if (!$jurusan) return response()->json(['message' => 'Data tidak ditemukan'], 404);
+
+        if ($jurusan->kelas()->count() > 0) {
+            return response()->json(['message' => 'Hapus Gagal: Jurusan masih digunakan di ' . $jurusan->kelas()->count() . ' kelas.'], 409);
         }
 
-        //buat data
-        $jurusan = Jurusan::create([
-            'kode_jurusan' => $request->kode_jurusan,
-            'nama_jurusan' => $request->nama_jurusan
-        ]);
-        return response()->json(['message' => 'Jurusan Berhasil Ditambah', 'data' => $jurusan]);
+        $jurusan->delete();
+        return response()->json(['message' => 'Jurusan berhasil dihapus']);
     }
 
-    // public function showJurusan($kode_jurusan)
-    // {
-    //     $jurusan = Jurusan::find($kode_jurusan);
-    //     if (!$jurusan) {
-    //         return response()->json(['message' => 'Jurusan tidak ditemukan'], 404);
-    //     }
-    //     return response()->json($jurusan);
-    // }
+    // ==========================================
+    // TAHUN AJARAN
+    // ==========================================
 
-    // public function updateJurusan(Request $request, $kode_jurusan)
-    // {
-    //     $jurusan = Jurusan::find($kode_jurusan);
-    //     if (!$jurusan) {
-    //         return response()->json(['message' => 'Jurusan tidak ditemukan'], 404);
-    //     }
-    //     $validator = Validator::make($request->all(), [
-    //         'nama_jurusan' => 'required|string',
-    //     ]);
-    //     if ($validator->fails()) {
-    //         return response()->json($validator->errors(), 422);
-    //     }
-    //     $jurusan->update($request->only('nama_jurusan'));
-    //     return response()->json($jurusan);
-    // }
-
-    // public function deleteJurusan($kode_jurusan)
-    // {
-    //     $jurusan = Jurusan::find($kode_jurusan);
-    //     if (!$jurusan) {
-    //         return response()->json(['message' => 'Jurusan tidak ditemukan'], 404);
-    //     }
-    //     if ($jurusan->kelas()->count() > 0) {
-    //         return response()->json([
-    //             'message' => 'Hapus Gagal: Jurusan ini masih digunakan oleh ' . $jurusan->kelas()->count() . ' kelas.'
-    //         ], 409);
-    //     }
-    //     $jurusan->delete();
-    //     return response()->json(['message' => 'Jurusan berhasil dihapus'], 200);
-    // }
-
-    /**
-     *ambil semua data tahun ajaran
-     */
     public function getTahunAjaran()
     {
-        $tahunAjaran = TahunAjaran::orderBy('status', 'asc')->get();
-        return response()->json($tahunAjaran);
+        return response()->json(TahunAjaran::orderBy('tahun_ajaran', 'desc')->get());
     }
 
-    /**
-     *simpen data tahun ajaran baru
-     */
     public function storeTahunAjaran(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'kode_tahun_ajaran' => 'required|string|unique:tahun_ajaran,kode_tahun_ajaran', // Manual: TA-2025
-            'tahun_ajaran' => 'required|string', // Manual: 2024/2025
+            'kode_tahun_ajaran' => 'required|string|unique:tahun_ajaran,kode_tahun_ajaran',
+            'tahun_ajaran' => 'required|string|unique:tahun_ajaran,tahun_ajaran',
             'status' => 'required|in:aktif,nonaktif',
+        ], [
+            'tahun_ajaran.unique' => 'TAHUN AJARAN TIDAK BOLEH SAMA' // Pesan Wireframe Turn 15
         ]);
 
-        if ($validator->fails()) {
-            return response()->json($validator->errors(), 422);
-        }
+        if ($validator->fails()) return response()->json(['errors' => $validator->errors()], 422);
 
-        $ta = TahunAjaran::create([
-            'kode_tahun_ajaran' => $request->kode_tahun_ajaran,
-            'tahun_ajaran' => $request->tahun_ajaran,
-            'status' => $request->status
-        ]);
+        $ta = TahunAjaran::create($request->all());
         return response()->json(['message' => 'Tahun Ajaran Berhasil Ditambah', 'data' => $ta]);
     }
 
-    // public function updateTahunAjaran(Request $request, $id)
-    // {
-    //     $tahunAjaran = TahunAjaran::find($id);
-    //     if (!$tahunAjaran) {
-    //         return response()->json(['message' => 'Tahun Ajaran tidak ditemukan'], 404);
-    //     }
-    //     $validator = Validator::make($request->all(), [
-    //         'tahun_ajaran' => 'required|string|unique:tahun_ajaran,tahun_ajaran,' . $id,
-    //         'status' => 'required|in:aktif,nonaktif',
-    //     ]);
-    //     if ($validator->fails()) {
-    //         return response()->json($validator->errors(), 422);
-    //     }
-    //     $tahunAjaran->update($request->all());
-    //     return response()->json($tahunAjaran);
-    // }
-
-    // public function deleteTahunAjaran($id)
-    // {
-    //     $tahunAjaran = TahunAjaran::find($id);
-    //     if (!$tahunAjaran) {
-    //         return response()->json(['message' => 'Tahun Ajaran tidak ditemukan'], 404);
-    //     }
-    //     if ($tahunAjaran->kelas()->count() > 0) {
-    //         return response()->json([
-    //             'message' => 'Hapus Gagal: Tahun Ajaran ini masih digunakan oleh ' . $tahunAjaran->kelas()->count() . ' kelas.'
-    //         ], 409);
-    //     }
-    //     $tahunAjaran->delete();
-    //     return response()->json(['message' => 'Tahun Ajaran berhasil dihapus'], 200);
-    // }
-    /**
-     *ambil semua data kelas
-     */
-    public function getKelas()
+    public function updateTahunAjaran(Request $request, $kode_tahun_ajaran)
     {
-        // 'with()' menggunakan untuk eager loading dan mendapatkan relasi dari jurusan dan ta 
-        $data = Kelas::with(['jurusan', 'tahunAjaran'])->get();
-        return response()->json($data);
-    }
+        $ta = TahunAjaran::where('kode_tahun_ajaran', $kode_tahun_ajaran)->first();
+        if (!$ta) return response()->json(['message' => 'Data tidak ditemukan'], 404);
 
-    /**
-     *simpan data kelas baru
-     */
-    public function storeKelas(Request $request)
-    {
         $validator = Validator::make($request->all(), [
-            'nama_kelas' => 'required|string', // Contoh: X RPL 1
-            'kode_jurusan' => 'required|exists:jurusan,kode_jurusan',
-            'kode_tahun_ajaran' => 'required|exists:tahun_ajaran,kode_tahun_ajaran',
-        ]);
-        // --- AKHIR ATURAN BARU ---
-
-        if ($validator->fails()) {
-            return response()->json($validator->errors(), 422);
-        }
-
-        // Buat ID Kelas Unik
-        $id_clean = str_replace(' ', '-', strtoupper($request->nama_kelas));
-        $kode_kelas_unik = $id_clean . '-' . $request->kode_tahun_ajaran;
-
-        if (Kelas::find($kode_kelas_unik)) {
-            return response()->json(['message' => 'Kelas ini sudah ada di Tahun Ajaran tersebut!'], 422);
-        }
-
-        $kelas = Kelas::create([
-            'kode_kelas' => $kode_kelas_unik, // ID Otomatis
-            'nama_kelas' => $request->nama_kelas,
-            'kode_jurusan' => $request->kode_jurusan,
-            'kode_tahun_ajaran' => $request->kode_tahun_ajaran,
+            'tahun_ajaran' => 'required|string|unique:tahun_ajaran,tahun_ajaran,' . $kode_tahun_ajaran . ',kode_tahun_ajaran',
+            'status' => 'required|in:aktif,nonaktif',
         ]);
 
-        return response()->json(['message' => 'Kelas Berhasil Ditambah', 'data' => $kelas]);
+        if ($validator->fails()) return response()->json(['errors' => $validator->errors()], 422);
+
+        $ta->update($request->all());
+        return response()->json(['message' => 'Berhasil Update', 'data' => $ta]);
     }
 
-    // public function updateKelas(Request $request, $id)
-    // {
-    //     $kelas = Kelas::find($id);
-    //     if (!$kelas) {
-    //         return response()->json(['message' => 'Kelas tidak ditemukan'], 404);
-    //     }
+    public function deleteTahunAjaran($id)
+{
+    try {
+        // 1. Cari data berdasarkan ID atau Kode
+        $ta = TahunAjaran::where('kode_tahun_ajaran', $id)->first();
 
-    //     $validator = Validator::make($request->all(), [
-    //         'tahun_ajaran_id' => 'required|exists:tahun_ajaran,id',
-    //         'kode_jurusan' => 'required|exists:jurusan,kode_jurusan',
-    //         'nama_kelas' => [
-    //             'required',
-    //             'string',
-    //             Rule::unique('kelas')->where(function ($query) use ($request) {
-    //                 return $query
-    //                     ->where('tahun_ajaran_id', $request->tahun_ajaran_id)
-    //                     ->where('kode_jurusan', $request->kode_jurusan);
-    //             })->ignore($id), // 'ignore($id)' berarti aturan unik ini tidak berlaku untuk dirinya sendiri
-    //         ],
-    //     ], [
-    //         'nama_kelas.unique' => 'Kombinasi Kelas, Jurusan, dan Tahun Ajaran ini sudah ada.'
-    //     ]);
+        if (!$ta) {
+            return response()->json(['message' => 'Data tidak ditemukan'], 404);
+        }
 
-    //     if ($validator->fails()) {
-    //         return response()->json($validator->errors(), 422);
-    //     }
+        // 2. Eksekusi Hapus
+        // Catatan: Karena di migrasi Kelas Anda menggunakan onDelete('cascade'), 
+        // maka menghapus TA ini juga akan menghapus Kelas yang terkait.
+        $ta->delete();
 
-    //     $kelas->update($request->all());
-    //     $kelas->load(['jurusan', 'tahunAjaran']);
-    //     return response()->json($kelas);
-    // }
+        return response()->json(['message' => 'Tahun Ajaran berhasil dihapus']);
+    } catch (\Exception $e) {
+        return response()->json(['message' => 'Gagal menghapus: ' . $e->getMessage()], 500);
+    }
+}
 
-    // public function deleteKelas($id)
-    // {
-    //     $kelas = Kelas::find($id);
-    //     if (!$kelas) {
-    //         return response()->json(['message' => 'Kelas tidak ditemukan'], 404);
-    //     }
-    //     if ($kelas->nasabah()->count() > 0) {
-    //         return response()->json([
-    //             'message' => 'Hapus Gagal: Kelas ini masih memiliki ' . $kelas->nasabah()->count() . ' nasabah terdaftar.'
-    //         ], 409);
-    //     }
-    //     $kelas->delete();
-    //     return response()->json(['message' => 'Kelas berhasil dihapus'], 200);
-    // }
+    // ==========================================
+    // KELAS
+    // ==========================================
+
+    public function getKelas() {
+    $data = Kelas::with(['jurusan', 'tahunAjaran'])->get();
+    return response()->json($data); // Mengirim data murni
+    }
+
+    public function updateKelas(Request $request, $kode_kelas) {
+    // Cari kelas berdasarkan kode yang dikirim dari URL
+    $kelas = Kelas::where('kode_kelas', $kode_kelas)->first();
+    
+    if (!$kelas) return response()->json(['message' => 'Kelas tidak ditemukan'], 404);
+
+    $kelas->update([
+        'nama_kelas' => $request->nama_kelas,
+        'kode_jurusan' => $request->kode_jurusan,
+        'kode_tahun_ajaran' => $request->kode_tahun_ajaran,
+    ]);
+
+    return response()->json(['message' => 'Berhasil diperbarui']);
+}
+
+
+    public function storeKelas(Request $request)
+{
+    // 1. Validasi Input
+    $validator = Validator::make($request->all(), [
+        'nama_kelas' => 'required|string',
+        'kode_jurusan' => 'required|exists:jurusan,kode_jurusan',
+        'kode_tahun_ajaran' => 'required|exists:tahun_ajaran,kode_tahun_ajaran',
+    ]);
+
+    if ($validator->fails()) {
+        return response()->json(['message' => 'Validasi gagal', 'errors' => $validator->errors()], 422);
+    }
+
+    // 2. Cek Duplikat (Agar tidak ada data yang sama persis)
+    $exists = Kelas::where('nama_kelas', $request->nama_kelas)
+                    ->where('kode_jurusan', $request->kode_jurusan)
+                    ->where('kode_tahun_ajaran', $request->kode_tahun_ajaran)
+                    ->exists();
+
+    if ($exists) {
+        return response()->json(['message' => 'Kelas ini sudah terdaftar untuk jurusan dan tahun ajaran tersebut.'], 422);
+    }
+
+    // 3. GENERATE KODE KELAS (Format: X-AK-1-TA2425)
+    // Mengubah spasi menjadi tanda hubung, misal: "X AK 1" -> "X-AK-1"
+    $namaKelasBersih = str_replace(' ', '-', $request->nama_kelas);
+
+    // Membersihkan kode TA jika mengandung "TA-" agar tidak duplikat
+    $taBersih = str_replace('TA-', '', $request->kode_tahun_ajaran);
+
+    // Hasil akhir gabungan
+    $kodeBaru = $namaKelasBersih . '-TA' . $taBersih;
+
+    $kelas = Kelas::create([
+        'kode_kelas' => $kodeBaru, 
+        'nama_kelas' => $request->nama_kelas,
+        'kode_jurusan' => $request->kode_jurusan,
+        'kode_tahun_ajaran' => $request->kode_tahun_ajaran,
+    ]);
+
+    return response()->json(['message' => 'Kelas berhasil ditambahkan', 'data' => $kelas]);
+}
+
+public function deleteKelas($kode_kelas)
+{
+    try {
+        // 1. Cari data kelas berdasarkan Kode Kelas
+        $kelas = Kelas::where('kode_kelas', $kode_kelas)->first();
+
+        if (!$kelas) {
+            return response()->json(['message' => 'Data kelas tidak ditemukan'], 404);
+        }
+
+        // 2. Keamanan Tambahan: Cek apakah benar-benar tidak ada nasabah
+        // Meskipun Anda yakin kosong, pengecekan ini mencegah error database (Foreign Key)
+        $hasNasabah = \App\Models\Nasabah::where('kode_kelas', $kode_kelas)->exists();
+        if ($hasNasabah) {
+            return response()->json(['message' => 'Gagal: Masih ada nasabah yang terdaftar di kelas ini.'], 422);
+        }
+
+        // 3. Eksekusi Hapus
+        $kelas->delete();
+
+        return response()->json(['message' => 'Kelas berhasil dihapus']);
+    } catch (\Exception $e) {
+        return response()->json(['message' => 'Terjadi kesalahan: ' . $e->getMessage()], 500);
+    }
+}
+
+    // ==========================================
+    // PENGATURAN
+    // ==========================================
+
+public function getPetugas() {
+    return response()->json(\App\Models\Petugas::all());
+}
+
+// app/Http/Controllers/Api/MasterDataController.php
+
+public function storePetugas(Request $request) {
+    // 1. Validasi tanpa kode_petugas (karena dibuat otomatis)
+    $validator = Validator::make($request->all(), [
+        'nama_petugas' => 'required|string',
+        'username'     => 'required|unique:petugas,username',
+        'password'     => 'required|min:6',
+        'role'         => 'required|in:superadmin,admin'
+    ]);
+
+    if ($validator->fails()) return response()->json($validator->errors(), 422);
+
+    // 2. LOGIKA GENERATE KODE OTOMATIS
+    $role = $request->role;
+    $prefix = ($role === 'superadmin') ? 'SADM' : 'ADM';
+
+    // Cari kode petugas terakhir yang diawali dengan prefix tersebut
+    $lastPetugas = \App\Models\Petugas::where('kode_petugas', 'like', $prefix . '%')
+        ->orderBy('kode_petugas', 'desc')
+        ->first();
+
+    if ($lastPetugas) {
+        // Ambil angka setelah prefix (misal ADM001 -> ambil 001)
+        $lastNumber = (int) substr($lastPetugas->kode_petugas, strlen($prefix));
+        $nextNumber = $lastNumber + 1;
+    } else {
+        $nextNumber = 1;
+    }
+
+    // Format hasil akhir: ADM001 atau SADM001
+    $kodeOtomatis = $prefix . str_pad($nextNumber, 3, '0', STR_PAD_LEFT);
+
+    // 3. Simpan ke Database
+    $petugas = \App\Models\Petugas::create([
+        'kode_petugas' => $kodeOtomatis,
+        'nama_petugas' => $request->nama_petugas,
+        'username'     => $request->username,
+        'password'     => Hash::make($request->password),
+        'role'         => $request->role,
+    ]);
+
+    return response()->json([
+        'message' => 'Petugas berhasil ditambahkan dengan kode: ' . $kodeOtomatis,
+        'data' => $petugas
+    ]);
+}
+
+public function deletePetugas($kode) {
+    $petugas = \App\Models\Petugas::where('kode_petugas', $kode)->first();
+    if (!$petugas) return response()->json(['message' => 'Tidak ditemukan'], 404);
+    
+    // Cegah menghapus diri sendiri (opsional)
+    $petugas->delete();
+    return response()->json(['message' => 'Petugas dihapus']);
+}
+    // ==========================================
+    // PENGATURAN
+    // ==========================================
+    // Tambahkan fungsi untuk mengambil dan mengupdate pengaturan
+// app/Http/Controllers/Api/MasterDataController.php
+
+public function getPengaturan() {
+    try {
+        // Mengambil semua data dan mengubahnya jadi format Key => Value
+        $data = \App\Models\Pengaturan::all();
+        
+        // Tambahkan URL lengkap untuk logo agar bisa tampil di frontend
+        if (isset($data['logo_website']) && $data['logo_website']) {
+            $data['logo_website'] = url($data['logo_website']);
+        }
+
+        return response()->json($data);
+    } catch (\Exception $e) {
+        return response()->json(['message' => $e->getMessage()], 500);
+    }
+}
+
+// app/Http/Controllers/Api/MasterDataController.php
+
+public function updatePengaturan(Request $request)
+{
+    try {
+        $inputs = $request->all();
+
+        // 1. Logika Unggah Logo
+        if ($request->hasFile('logo')) {
+            $file = $request->file('logo');
+            // Simpan di folder: storage/app/public/logo
+            $path = $file->store('public/logo'); 
+            // Ubah path menjadi: storage/logo/namafile.png agar bisa diakses publik
+            $inputs['logo_website'] = str_replace('public/', 'storage/', $path);
+        }
+
+        // 2. Simpan/Update ke Database
+        foreach ($inputs as $key => $value) {
+            if ($key !== 'logo') { // Jangan simpan file mentah ke tabel
+                \App\Models\Pengaturan::updateOrCreate(
+                    ['nama_pengaturan' => $key],
+                    ['nilai' => $value]
+                );
+            }
+        }
+
+        return response()->json(['message' => 'Berhasil diperbarui']);
+    } catch (\Exception $e) {
+        return response()->json(['message' => $e.getMessage()], 500);
+    }
+}
 }

@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('tahun_ajaran', function (Blueprint $table) {
-            $table->string('kode_tahun_ajaran', 10)->primary();
+            $table->string('kode_tahun_ajaran', 20)->primary();
             $table->string('tahun_ajaran', 15);
             $table->enum('status', ['aktif', 'nonaktif'])->default('nonaktif');
             $table->timestamps();

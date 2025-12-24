@@ -13,7 +13,9 @@
         )
         ->withMiddleware(function (Middleware $middleware) {
             // --- TAMBAHKAN BARIS INI UNTUK MEMATIKAN CORS BAWAAN ---
-            $middleware->remove(\Illuminate\Http\Middleware\HandleCors::class);
+            $middleware->alias([
+            'super_admin' => \App\Http\Middleware\CheckSuperAdmin::class,
+        ]);
             // -------------------------------------------------------
         })
         ->withExceptions(function (Exceptions $exceptions) {

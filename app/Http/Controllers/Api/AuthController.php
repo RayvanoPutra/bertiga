@@ -48,50 +48,53 @@ class AuthController extends Controller
 
     public function loginNasabah(Request $request)
     {
-        //validasi input
+        // --- PERUBAHAN DI SINI ---
+        // Validasi input: sekarang pakai 'no_rekening' bukan 'username'
         $validator = Validator::make($request->all(), [
-            'username' => 'required',
-            'password' => 'required',
+            'no_rekening' => 'required|string', 
+            'password' => 'required|string',
         ]);
 
         if ($validator->fails()) {
             return response()->json($validator->errors(), 422);
         }
 
-        //find by username
-        $nasabah = Nasabah::where('username', $request->username)->first();
+        // Cari nasabah berdasarkan no_rekening
+        $nasabah = Nasabah::where('no_rekening', $request->no_rekening)->first();
 
-        //cek nasabah ada atau tidak dan cek password
+        // Cek nasabah ada atau tidak dan cek password
         if (! $nasabah || ! Hash::check($request->password, $nasabah->password)) {
             return response()->json([
-                'message' => 'Username atau Password salah.'
+                'message' => 'Nomor Rekening atau Password salah.'
             ], 401);
         }
 
-        //cek status nasabah
+        // Cek status nasabah
+        // Pastikan kolom 'status' ada di database, jika belum migrasi, baris ini bisa dikomentari sementara
         if ($nasabah->status != 'aktif') {
             throw ValidationException::withMessages([
-                'username' => ['Akun ini sudah tidak aktif (status: ' . $nasabah->status . ').'],
+                'no_rekening' => ['Akun ini sudah tidak aktif (status: ' . $nasabah->status . ').'],
             ]);
         }
 
-        //klo berhasil dapat akses/token'
+        // Generate token
         $token = $nasabah->createToken('token-nasabah')->plainTextToken;
 
-        //kirim respon json kl berhasil
+        // Kirim respon json
+        // Pastikan nama key sesuai dengan yang diminta Android ('token' dan 'data')
         return response()->json([
             'message' => 'Login Berhasil',
-            'token' => $token,
+            'token' => $token, 
             'data' => $nasabah
         ]);
     }
 
     public function logout(Request $request)
     {
-        //menghapus token akses saat ini
+        // Menghapus token akses saat ini
         $request->user()->currentAccessToken()->delete();
 
-        // respon json
+        // Respon json
         return response()->json(['message' => 'Logout Berhasil']);
     }
 }

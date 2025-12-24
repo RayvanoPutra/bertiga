@@ -16,8 +16,8 @@ return new class extends Migration
             $table->string('kode_kelas', 20)->primary();
             $table->string('nama_kelas', 50);
 
-            $table->string('kode_tahun_ajaran', 10);
-            $table->string('kode_jurusan', 8);
+            $table->string('kode_tahun_ajaran', 20);
+            $table->string('kode_jurusan', 20);
 
             // Relasi Tahun Ajaran
             $table->foreign('kode_tahun_ajaran')
@@ -30,6 +30,8 @@ return new class extends Migration
                 ->references('kode_jurusan')    
                 ->on('jurusan')                 
                 ->onDelete('cascade');
+
+            $table->unique(['nama_kelas', 'kode_tahun_ajaran', 'kode_jurusan'], 'kelas_unique_combo');  
 
             $table->timestamps();
         });

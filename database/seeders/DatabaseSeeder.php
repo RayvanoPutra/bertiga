@@ -13,14 +13,15 @@ class DatabaseSeeder extends Seeder
     {
         $this->call([
             // Data Master (Induk)
-            JurusanSeeder::class,
-            TahunAjaranSeeder::class,
+            // TahunAjaranSeeder::class,
+            // JurusanSeeder::class,
+            // KelasSeeder::class,
             JenisTransaksiSeeder::class,
             PetugasSeeder::class,
             PengaturanSeeder::class, // (Jika ada)
 
             // Data Kelas (Wajib sebelum Nasabah)
-            KelasSeeder::class,
+            
 
             // --- PASTIKAN BARIS INI ADA & TIDAK DIKOMENTARI ---
             NasabahSeeder::class, 

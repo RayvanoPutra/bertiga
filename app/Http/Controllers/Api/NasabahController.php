@@ -12,14 +12,49 @@ use App\Models\Pengaturan;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
+use Carbon\Carbon; 
 
 class NasabahController extends Controller
 {
-    public function index()
-    {
-        $data = Nasabah::with('kelas')->get();
-        return response()->json($data);
+    public function index(Request $request) // Tambahkan Request $request di sini
+{
+    // 1. Inisialisasi query dengan relasi
+    $query = Nasabah::with(['kelas.jurusan', 'kelas.tahunAjaran']);
+
+    // 2. Filter Pencarian (Nama, No Rekening, atau NIS)
+    if ($request->has('search') && $request->search != '') {
+        $search = $request->search;
+        $query->where(function($q) use ($search) {
+            $q->where('nama', 'like', '%' . $search . '%')
+              ->orWhere('no_rekening', 'like', '%' . $search . '%')
+              ->orWhere('no_induk', 'like', '%' . $search . '%');
+        });
     }
+
+    // 3. Filter Jurusan (Melalui relasi Kelas)
+    if ($request->has('jurusan') && $request->jurusan != '') {
+        $query->whereHas('kelas', function($q) use ($request) {
+            $q->where('kode_jurusan', $request->jurusan);
+        });
+    }
+
+    // 4. Filter Tahun Ajaran (Melalui relasi Kelas)
+    if ($request->has('tahun_ajaran') && $request->tahun_ajaran != '') {
+        $query->whereHas('kelas', function($q) use ($request) {
+            $q->where('kode_tahun_ajaran', $request->tahun_ajaran);
+        });
+    }
+
+    // 5. Filter Kelas Spesifik
+    if ($request->has('kelas') && $request->kelas != '') {
+        $query->where('kode_kelas', $request->kelas);
+    }
+
+    // 6. Ambil data dengan urutan terbaru
+    $data = $query->orderBy('created_at', 'desc')->get();
+
+    return response()->json($data);
+}
 
     /**
      * Register Nasabah (Siswa/Guru) + Otomatis Potong Admin + Catat Transaksi
@@ -27,25 +62,43 @@ class NasabahController extends Controller
     public function store(Request $request)
     {
         // 1. Validasi Input
-        $validator = Validator::make($request->all(), [
-            'nama' => 'required|string',
-            'no_induk' => 'required|string|unique:nasabah,no_induk',
-            'jenis_rekening' => 'required|in:siswa,guru',
-            'username' => 'required|string|unique:nasabah,username',
-            'password' => 'required|string',
-            'alamat' => 'nullable|string',
-            'no_telp' => 'nullable|string',
-            'kode_kelas' => 'nullable|exists:kelas,kode_kelas',
-            'saldo_awal' => 'required|integer|min:20000',
-        ]);
+        // 1. Validasi Input (DENGAN PESAN CUSTOM BAHASA INDONESIA)
+$validator = Validator::make($request->all(), [
+    'nama' => 'required|string',
+    'no_induk' => 'required|string|unique:nasabah,no_induk', // Unik
+    'jenis_rekening' => 'required|in:siswa,guru',
+    'password' => 'required|string|min:6',
+    
+    // Kolom opsional
+    'alamat' => 'nullable|string', 
+    'no_telp' => 'nullable|string',
+    
+    'email' => 'required|email|unique:nasabah,email', // Unik
+    'kode_kelas' => 'nullable|required_if:jenis_rekening,siswa|exists:kelas,kode_kelas',
+    'saldo_awal' => 'required|integer|min:20000',
+], [
+    // --- PESAN ERROR CUSTOM AGAR JELAS DI FRONTEND ---
+    'no_induk.unique' => 'Nomor Induk (NIS/NIP) ini sudah terdaftar.',
+    'email.unique' => 'Alamat Email ini sudah digunakan nasabah lain.',
+    'password.min' => 'Password minimal harus 6 karakter.',
+    'kode_kelas.required_if' => 'Kelas harus dipilih untuk nasabah siswa.',
+    'saldo_awal.min' => 'Setoran awal minimal adalah Rp 20.000.',
+]);
 
-        if ($validator->fails()) {
-            return response()->json($validator->errors(), 422);
-        }
+if ($validator->fails()) {
+    // Mengirimkan detail 'errors' agar bisa dibaca JavaScript
+    return response()->json([
+        'message' => 'Validasi Gagal', 
+        'errors' => $validator->errors()
+    ], 422);
+}
+        
+        // 2. Ambil Pengaturan Biaya Admin Terbaru
+        // Sesuaikan key 'jumlah_potongan' dengan yang dikirim dari form pengaturan
+        $settingAdmin = Pengaturan::where('nama_pengaturan', 'jumlah_potongan')->first();
 
-        // 2. Ambil Pengaturan Biaya Admin (Default 12.000 jika tidak disetting)
-        $settingAdmin = Pengaturan::where('nama_pengaturan', 'biaya_admin_daftar')->first();
-        $biayaAdmin = $settingAdmin ? (int)$settingAdmin->nilai : 12000;
+        // Jika di database tidak ada, kita set default 0 agar tidak membingungkan
+        $biayaAdmin = $settingAdmin ? (int)$settingAdmin->nilai : 0;
 
         // 3. Hitung Saldo Bersih
         if ($request->saldo_awal < $biayaAdmin) {
@@ -53,14 +106,54 @@ class NasabahController extends Controller
         }
         $saldoBersih = $request->saldo_awal - $biayaAdmin;
 
-        // 4. Generate No Rekening Unik
-        do {
-            $acak = rand(10000, 99999);
-            $no_rekening_baru = '100' . $acak;
-            $cek = Nasabah::where('no_rekening', $no_rekening_baru)->first();
-        } while ($cek);
+        // 4. GENERATE NO REKENING UNIK (Format: BB-TT-KK-XXXXX)
+        // ---------------------------------------------------------
+        $now = Carbon::now();
+        $bulan = $now->format('m'); // Contoh: 08 (Bulan Saat Ini)
+        $tahun = $now->format('y'); // Contoh: 25 (Tahun Saat Ini - 2 Digit)
+        
+        $kodeTingkat = '00'; // Default jika tidak terdeteksi (atau untuk Guru)
+        
+        if ($request->jenis_rekening == 'siswa' && $request->kode_kelas) {
+            $kelas = Kelas::where('kode_kelas', $request->kode_kelas)->first();
+            if ($kelas) {
+                // Deteksi Angka Kelas dari Nama Kelas
+                // Contoh: "X RPL 1" -> 10, "XI TKJ 2" -> 11
+                $namaKelas = strtoupper($kelas->nama_kelas);
+                
+                if (str_contains($namaKelas, 'X ') || str_contains($namaKelas, '10 ')) {
+                    $kodeTingkat = '10';
+                } elseif (str_contains($namaKelas, 'XI ') || str_contains($namaKelas, '11 ')) {
+                    $kodeTingkat = '11';
+                } elseif (str_contains($namaKelas, 'XII ') || str_contains($namaKelas, '12 ')) {
+                    $kodeTingkat = '12';
+                }
+            }
+        } elseif ($request->jenis_rekening == 'guru') {
+            $kodeTingkat = '99'; // Kode khusus Guru
+        }
 
-        // 5. Eksekusi Database Transaction (Agar Data Konsisten)
+        // Prefix: 082510 (Bulan-Tahun-TingkatKelas)
+        $prefix = $bulan . $tahun . $kodeTingkat; 
+
+        // Cari nomor urut terakhir dengan prefix yang sama
+        $lastNasabah = Nasabah::where('no_rekening', 'like', $prefix . '%')
+            ->orderBy('no_rekening', 'desc')
+            ->first();
+
+        if ($lastNasabah) {
+            // Ambil 5 digit terakhir lalu tambah 1
+            $lastUrut = (int)substr($lastNasabah->no_rekening, -5);
+            $nextUrut = $lastUrut + 1;
+        } else {
+            $nextUrut = 1;
+        }
+
+        // Format akhir: 08251000010
+        $no_rekening_baru = $prefix . sprintf('%05d', $nextUrut);
+        // ---------------------------------------------------------
+
+        // 5. Eksekusi Database Transaction
         try {
             DB::beginTransaction();
 
@@ -70,47 +163,58 @@ class NasabahController extends Controller
                 'no_induk' => $request->no_induk,
                 'nama' => $request->nama,
                 'email' => $request->email,
-                'no_telp' => $request->no_telp,
+                
+                'no_telp' => $request->no_telp ?? null, 
+                
                 'jenis_rekening' => $request->jenis_rekening,
-                'kode_kelas' => $request->kode_kelas, // Gunakan id_kelas
-                'saldo' => $saldoBersih, // Simpan saldo yang sudah dipotong
-                'username' => $request->username,
+                'kode_kelas' => $request->kode_kelas,
+                'saldo' => $saldoBersih,
+                
+                // HAPUS BARIS INI (KARENA KOLOM USERNAME DIHAPUS)
+                // 'username' => $no_rekening_baru, 
+                
                 'password' => Hash::make($request->password),
+                'status' => 'aktif',
             ]);
 
-            // B. Catat Transaksi 1: Setoran Awal (Uang Masuk)
-            // Kita pakai ID Jenis 'SETOR' (sesuai seeder)
-            $id_trx_1 = 'TRX-' . time() . '-' . rand(100, 999);
+            // B. Catat Transaksi 1: Setoran Awal
+            $jenisSetor = JenisTransaksi::where('nama_jenis', 'Setor Tunai')->first();
+            $kodeJenisSetor = $jenisSetor ? $jenisSetor->kode_jenis : 'SETOR';
+
             Transaksi::create([
-                'kode_transaksi' => $id_trx_1,
+                'kode_transaksi' => 'TRX-' . time() . '-' . rand(100, 999),
                 'no_rekening' => $no_rekening_baru,
-                'kode_petugas' => null, // null karena sistem otomatis
-                'kode_jenis' => 'SETOR', // Pastikan ID ini ada di tabel jenis_transaksi
+                'kode_petugas' => $request->user()->kode_petugas ?? null, 
+                'kode_jenis' => $kodeJenisSetor,
                 'tgl_transaksi' => now(),
                 'jumlah' => $request->saldo_awal,
-                'status' => 'success'
+                'status' => 'success',
+                'keterangan_nasabah' => 'Setoran Awal Pendaftaran',
+                // Data Historis - (Dihapus sesuai request sebelumnya)
             ]);
 
-            // C. Catat Transaksi 2: Potongan Admin (Uang Keluar)
-            // Kita pakai ID Jenis 'TARIK' (sebagai representasi uang keluar/biaya)
-            // Atau jika Anda sudah buat jenis 'BIAYA', pakai itu.
+            // C. Catat Transaksi 2: Potongan Admin
             if ($biayaAdmin > 0) {
-                $id_trx_2 = 'TRX-' . (time() + 1) . '-' . rand(100, 999);
+                $jenisAdmin = JenisTransaksi::where('nama_jenis', 'Biaya Admin')->first();
+                $kodeJenisAdmin = $jenisAdmin ? $jenisAdmin->kode_jenis : 'AWAL'; 
+
                 Transaksi::create([
-                    'kode_transaksi' => $id_trx_2,
+                    'kode_transaksi' => 'ADM-' . (time() + 1) . '-' . rand(100, 999),
                     'no_rekening' => $no_rekening_baru,
-                    'kode_petugas' => null,
-                    'kode_jenis' => 'AWAL', // Anggap biaya admin sebagai penarikan sistem
+                    'kode_petugas' => $request->user()->kode_petugas ?? null,
+                    'kode_jenis' => $kodeJenisAdmin,
                     'tgl_transaksi' => now(),
                     'jumlah' => $biayaAdmin,
-                    'status' => 'success'
+                    'status' => 'success',
+                    'keterangan_nasabah' => 'Potongan Biaya Admin Pendaftaran',
+                    // Data Historis - (Dihapus sesuai request sebelumnya)
                 ]);
             }
 
-            DB::commit(); // Simpan permanen
+            DB::commit();
 
             return response()->json([
-                'message' => 'Nasabah Berhasil Didaftarkan',
+                'message' => 'Nasabah Berhasil Didaftarkan. No Rek: ' . $no_rekening_baru,
                 'detail' => [
                     'uang_diterima' => $request->saldo_awal,
                     'potongan_admin' => $biayaAdmin,
@@ -119,153 +223,141 @@ class NasabahController extends Controller
                 'data' => $nasabah
             ]);
         } catch (\Exception $e) {
-            DB::rollback(); // Batalkan semua jika error
+            DB::rollback();
             return response()->json(['message' => 'Gagal: ' . $e->getMessage()], 500);
         }
     }
+
+    /**
+     * Update Profil Mandiri
+     */
+    public function updateProfile(Request $request)
+    {
+        $user = $request->user();
+
+        $validator = Validator::make($request->all(), [
+            'password' => 'nullable|string|min:6',
+            'email'    => 'nullable|email',
+            'no_telp'  => 'nullable|string',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json($validator->errors(), 422);
+        }
+
+        $updateData = [
+            'email' => $request->email,
+            'no_telp' => $request->no_telp,
+            // Username tidak bisa diupdate
+        ];
+
+        if ($request->filled('password')) {
+            $updateData['password'] = Hash::make($request->password);
+        }
+
+        $user->update($updateData);
+
+        return response()->json([
+            'message' => 'Profil berhasil diperbarui',
+            'data' => $user
+        ]);
+    }
+    
+    /**
+     * Hapus Nasabah (Hanya jika saldo 0)
+     */
+    public function deleteNasabah($no_rekening)
+    {
+        $nasabah = Nasabah::where('no_rekening', $no_rekening)->first();
+        
+        if (!$nasabah) {
+            return response()->json(['message' => 'Nasabah tidak ditemukan'], 404);
+        }
+
+        if ($nasabah->saldo > 0) {
+            return response()->json(['message' => 'Gagal: Nasabah masih memiliki saldo.'], 422);
+        }
+
+        $nasabah->delete();
+        return response()->json(['message' => 'Nasabah berhasil dihapus']);
+    }
+
+    public function updateNasabah(Request $request, $no_rekening)
+{
+    $nasabah = Nasabah::where('no_rekening', $no_rekening)->first();
+
+    if (!$nasabah) {
+        return response()->json(['message' => 'Nasabah tidak ditemukan'], 404);
+    }
+
+    // PERBAIKAN DI SINI:
+    // Kita beri tahu Laravel: "Cek email unik di tabel nasabah, tapi abaikan baris yang no_rekening-nya sama dengan nasabah ini"
+    $validator = Validator::make($request->all(), [
+        'nama' => 'required|string',
+        'email' => 'required|email|unique:nasabah,email,' . $nasabah->no_rekening . ',no_rekening',
+        'no_telp' => 'nullable|string',
+    ]);
+
+    if ($validator->fails()) {
+        return response()->json(['errors' => $validator->errors()], 422);
+    }
+
+    $nasabah->update([
+        'nama' => $request->nama,
+        'email' => $request->email,
+        'no_telp' => $request->no_telp,
+    ]);
+
+    return response()->json(['message' => 'Berhasil memperbarui data']);
 }
+    /**
+     * Bulk Update Status (Dari kodingan teman Anda)
+     */
+    public function bulkUpdateStatus(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'no_rekening_list' => 'required|array|min:1',
+            'no_rekening_list.*' => 'string|exists:nasabah,no_rekening',
+            'status_baru' => 'required|in:aktif,nonaktif,alumni',
+        ]);
 
+        if ($validator->fails()) {
+            return response()->json($validator->errors(), 422);
+        }
 
-/**
- * Helper function untuk membuat No Rekening unik.
- * Format: BSM- [6 digit angka random]
- */
-    // private function generateNoRekening()
-    // {
-    //     do {
-    //         $noRek = 'BSM-' . mt_rand(100000, 999999);
-    //         // Cek ke DB apakah noRek sudah ada. Jika sudah, ulangi (loop).
-    //         $cek = Nasabah::where('no_rekening', $noRek)->first();
-    //     } while ($cek);
+        // Cek saldo jika mau dinonaktifkan (Opsional)
+        // ... (Logika cek saldo bisa ditambah di sini)
 
-    //     return $noRek;
-    // }
+        try {
+            Nasabah::whereIn('no_rekening', $request->no_rekening_list)
+                ->update(['status' => $request->status_baru]);
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'Gagal update status.', 'error' => $e->getMessage()], 500);
+        }
 
-    // method utk mengambil data nasabah (web)
-    // public function getNasabah(Request $request)
-    // {
-    //     $nasabah = Nasabah::with(['kelas', 'kelas.jurusan'])
-    //         ->where('status', 'aktif')
-    //         ->orderBy('nama', 'asc')
-    //         ->get();
+        return response()->json(['message' => 'Berhasil update status.']);
+    }
 
-    //     return response()->json($nasabah);
-    // }
+    //Statistik Dashboard
+    // app/Http/Controllers/Api/NasabahController.php
 
-    // method utk mengambil detail nasabah by no_rekening
-    // public function showNasabah($no_rekening)
-    // {
-    //     $nasabah = Nasabah::with(['kelas', 'kelas.jurusan'])
-    //         ->find($no_rekening);
+public function getDashboardStats() {
+    try {
+        $totalSaldo = \App\Models\Nasabah::sum('saldo'); // Total uang nasabah
+        $totalNasabah = \App\Models\Nasabah::count(); // Jumlah nasabah terdaftar
+        
+        // Menghitung setoran masuk hari ini (opsional jika tabel transaksi sudah ada)
+        $setoranHariIni = \App\Models\Transaksi::where('jenis_transaksi', 'setor')
+            ->whereDate('created_at', today())
+            ->sum('nominal');
 
-    //     if (!$nasabah) {
-    //         return response()->json(['message' => 'Nasabah tidak ditemukan'], 404);
-    //     }
-    //     return response()->json($nasabah);
-    // }
-
-    // method utk update nasabah
-    // public function updateNasabah(Request $request, $no_rekening)
-    // {
-    //     $nasabah = Nasabah::find($no_rekening);
-    //     if (!$nasabah) {
-    //         return response()->json(['message' => 'Nasabah tidak ditemukan'], 404);
-    //     }
-
-    //     // validasi input
-    //     $validator = Validator::make($request->all(), [
-    //         'username' => 'required|string|unique:nasabah,username,' . $no_rekening . ',no_rekening',
-    //         'nama' => 'required|string',
-    //         'no_induk' => 'required|string|unique:nasabah,no_induk,' . $no_rekening . ',no_rekening',
-    //         'jenis_rekening' => 'required|in:siswa,guru',
-    //         'email' => 'nullable|email',
-    //         'kelas_id' => 'nullable|required_if:jenis_rekening,siswa|exists:kelas,id',
-    //         // tidak izinkan update password atau saldo di sini
-    //     ]);
-
-    //     if ($validator->fails()) {
-    //         return response()->json($validator->errors(), 422);
-    //     }
-
-    //     $nasabah->update($request->except(['password', 'saldo'])); //kecuali
-    //     return response()->json($nasabah);
-    // }
-    // // method utk delete nasabah
-    // public function deleteNasabah(Request $request, $no_rekening)
-    // {
-    //     $nasabah = Nasabah::find($no_rekening);
-    //     if (!$nasabah) {
-    //         return response()->json(['message' => 'Nasabah tidak ditemukan'], 404);
-    //     }
-
-    //     //cek saldo
-    //     if ($nasabah->saldo > 0) {
-    //         return response()->json(['message' => 'Hapus Gagal: Nasabah masih memiliki sisa saldo. Harap tarik tunai terlebih dahulu.'], 409);
-    //     }
-
-    //     //cek transaksi pending
-    //     if ($nasabah->transaksi()->where('status', 'pending')->count() > 0) {
-    //         return response()->json(['message' => 'Hapus Gagal: Nasabah masih memiliki transaksi pending.'], 409);
-    //     }
-
-    //     $nasabah->status = 'nonaktif';
-    //     $nasabah->save();
-
-    //     return response()->json(['message' => 'Nasabah berhasil dinonaktifkan.']);
-    // }
-
-    // public function bulkUpdateStatus(Request $request)
-    // {
-    //     // validasi input
-    //     $validator = Validator::make($request->all(), [
-    //         'no_rekening_list' => 'required|array|min:1',
-    //         'no_rekening_list.*' => 'string|exists:nasabah,no_rekening', //cek array per item
-    //         'status_baru' => 'required|in:aktif,nonaktif,alumni',
-    //     ]);
-
-    //     if ($validator->fails()) {
-    //         return response()->json($validator->errors(), 422);
-    //     }
-
-    //     $listNoRekening = $request->no_rekening_list;
-    //     $statusBaru = $request->status_baru;
-
-    //     // filter nasabah yg ada saldonya
-    //     $masihPunyaSaldo = Nasabah::whereIn('no_rekening', $listNoRekening)
-    //         ->where('saldo', '>', 0)
-    //         ->pluck('nama', 'no_rekening');
-
-    //     if ($masihPunyaSaldo->isNotEmpty()) {
-    //         return response()->json([
-    //             'message' => 'Gagal: Beberapa nasabah masih memiliki sisa saldo.',
-    //             'gagal_karena_saldo' => $masihPunyaSaldo
-    //         ], 409); // 409 Conflict
-    //     }
-
-    //     $masihPending = Nasabah::whereIn('no_rekening', $listNoRekening)
-    //         ->whereHas('transaksi',
-    //  function ($query) {
-    //             $query->where('status', 'pending');
-    //         })
-    //         ->pluck('nama', 'no_rekening');
-
-    //     if ($masihPending->isNotEmpty()) {
-    //         return response()->json([
-    //             'message' => 'Gagal: Beberapa nasabah masih memiliki transaksi pending.',
-    //             'gagal_karena_pending' => $masihPending
-    //         ], 409);
-    //     }
-
-    //     // Jika semua aman (saldo 0 dan tidak ada pending), jalankan 1 query UPDATE massal.
-    //     try {
-    //         DB::table('nasabah')
-    //             ->whereIn('no_rekening', $listNoRekening)
-    //             ->update(['status' => $statusBaru]);
-    //     } catch (\Exception $e) {
-    //         return response()->json(['message' => 'Gagal update status nasabah.', 'error' => $e->getMessage()], 500);
-    //     }
-
-    //     return response()->json([
-    //         'message' => 'Berhasil memperbarui status untuk ' . count($listNoRekening) . ' nasabah.'
-    //     ]);
-    // }
+        return response()->json([
+            'total_saldo' => $totalSaldo,
+            'total_nasabah' => $totalNasabah,
+            'setoran_hari_ini' => $setoranHariIni,
+        ]);
+    } catch (\Exception $e) {
+        return response()->json(['message' => 'Gagal memuat statistik'], 500);
+    }
+}
+}
