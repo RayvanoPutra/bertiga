@@ -49,6 +49,19 @@
             android:name=".ui.laporan.LaporanActivity"
             android:exported="false" />
 
+        <!-- TAMBAHAN BARU: Activity Lupa Password -->
+        <activity
+            android:name=".ui.forgotpassword.ForgotPasswordActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".ui.forgotpassword.VerifyOtpActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".ui.forgotpassword.ResetPasswordActivity"
+            android:exported="false" />
+
     </application>
 
 </manifest>

@@ -29,11 +29,11 @@
         app:titleCentered="true"
         app:titleTextColor="@color/white" />
 
-    <!-- FOTO PROFIL (Dengan Border Putih) -->
+    <!-- FOTO PROFIL -->
     <com.google.android.material.imageview.ShapeableImageView
         android:id="@+id/imageProfile"
-        android:layout_width="110dp"
-        android:layout_height="110dp"
+        android:layout_width="100dp"
+        android:layout_height="100dp"
         android:layout_marginTop="16dp"
         android:padding="3dp"
         android:background="@drawable/gradient_saldo_card"
@@ -41,28 +41,27 @@
         app:shapeAppearanceOverlay="@style/ShapeAppearance.Material3.Corner.Full"
         app:strokeColor="@color/white"
         app:strokeWidth="2dp"
-        app:contentPadding="15dp"
+        app:contentPadding="10dp"
         app:tint="@color/white"
         app:layout_constraintTop_toBottomOf="@id/toolbarProfile"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"/>
 
-    <!-- NAMA LENGKAP -->
+    <!-- NAMA & NO REKENING (PERMANEN) -->
     <TextView
         android:id="@+id/textNamaProfile"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
+        android:layout_marginTop="12dp"
         android:text="Memuat Nama..."
         android:textColor="@color/white"
-        android:textSize="22sp"
+        android:textSize="20sp"
         android:textStyle="bold"
         app:layout_constraintTop_toBottomOf="@id/imageProfile"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 
-    <!-- BADGE NIS (INI YANG BARU) -->
-    <!-- Menggunakan CardView transparan agar terlihat seperti 'Tag' -->
+    <!-- Badge No Rekening -->
     <com.google.android.material.card.MaterialCardView
         android:id="@+id/badgeNis"
         android:layout_width="wrap_content"
@@ -82,23 +81,21 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:paddingHorizontal="16dp"
-            android:paddingVertical="6dp"
-            android:text="NIS: ..."
+            android:paddingVertical="4dp"
+            android:text="No. Rek: ..."
             android:textColor="@color/white"
-            android:textSize="14sp"
-            android:fontFamily="sans-serif-medium"
-            android:letterSpacing="0.05" />
-
+            android:textSize="12sp"
+            android:fontFamily="monospace"/>
     </com.google.android.material.card.MaterialCardView>
 
-    <!-- 2. KARTU INFORMASI DETAIL -->
+    <!-- 2. KARTU INFORMASI (EDITABLE) -->
     <com.google.android.material.card.MaterialCardView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginHorizontal="20dp"
-        android:layout_marginTop="32dp"
-        app:cardCornerRadius="24dp"
-        app:cardElevation="8dp"
+        android:layout_marginHorizontal="16dp"
+        android:layout_marginTop="24dp"
+        app:cardCornerRadius="16dp"
+        app:cardElevation="6dp"
         app:cardBackgroundColor="@color/white"
         app:layout_constraintTop_toBottomOf="@id/badgeNis">
 
@@ -108,52 +105,112 @@
             android:orientation="vertical"
             android:padding="24dp">
 
-            <!-- Baris: Email -->
+            <!-- BAGIAN EMAIL -->
             <TextView
-                android:text="Email Sekolah"
+                android:text="Email"
                 android:textColor="@color/text_secondary"
                 android:textSize="12sp"
+                android:layout_marginBottom="4dp"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"/>
-            <TextView
-                android:id="@+id/tvEmail"
-                android:text="-"
-                android:textColor="@color/text_primary"
-                android:textSize="16sp"
-                android:textStyle="bold"
-                android:layout_marginBottom="20dp"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"/>
 
-            <!-- Baris: No HP -->
-            <TextView
-                android:text="Nomor WhatsApp / HP"
-                android:textColor="@color/text_secondary"
-                android:textSize="12sp"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"/>
-            <TextView
-                android:id="@+id/tvNoHp"
-                android:text="-"
-                android:textColor="@color/text_primary"
-                android:textSize="16sp"
-                android:textStyle="bold"
-                android:layout_marginBottom="20dp"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"/>
-
-            <View
-                android:layout_width="match_parent"
-                android:layout_height="1dp"
-                android:background="@color/divider_light"
-                android:layout_marginBottom="20dp"/>
-
-            <!-- Baris: Kelas & Jurusan -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
-                android:baselineAligned="false">
+                android:gravity="center_vertical"
+                android:layout_marginBottom="16dp">
+
+                <EditText
+                    android:id="@+id/etEmail"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:background="@android:color/transparent"
+                    android:padding="8dp"
+                    android:inputType="textEmailAddress"
+                    android:text="loading..."
+                    android:textColor="@color/text_primary"
+                    android:textSize="16sp"
+                    android:enabled="false"/> <!-- Default Mati -->
+
+                <ImageButton
+                    android:id="@+id/btnEditEmail"
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:src="@android:drawable/ic_menu_edit"
+                    app:tint="@color/blue_primary"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="Edit Email"/>
+            </LinearLayout>
+            <View android:layout_width="match_parent" android:layout_height="1dp" android:background="@color/divider_light" android:layout_marginBottom="16dp"/>
+
+
+            <!-- BAGIAN NO HP -->
+            <TextView
+                android:text="Nomor HP / WhatsApp"
+                android:textColor="@color/text_secondary"
+                android:textSize="12sp"
+                android:layout_marginBottom="4dp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"/>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="16dp">
+
+                <EditText
+                    android:id="@+id/etNoHp"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:background="@android:color/transparent"
+                    android:padding="8dp"
+                    android:inputType="phone"
+                    android:text="loading..."
+                    android:textColor="@color/text_primary"
+                    android:textSize="16sp"
+                    android:enabled="false"/>
+
+                <ImageButton
+                    android:id="@+id/btnEditHp"
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:src="@android:drawable/ic_menu_edit"
+                    app:tint="@color/blue_primary"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="Edit HP"/>
+            </LinearLayout>
+            <View android:layout_width="match_parent" android:layout_height="1dp" android:background="@color/divider_light" android:layout_marginBottom="16dp"/>
+
+            <!-- TOMBOL GANTI PASSWORD (OPSIONAL) -->
+            <TextView
+                android:id="@+id/btnGantiPassword"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Ganti Password"
+                android:textColor="@color/blue_primary"
+                android:textStyle="bold"
+                android:gravity="center"
+                android:padding="12dp"
+                android:background="?attr/selectableItemBackground"
+                android:clickable="true"
+                android:focusable="true"/>
+
+            <!-- Info Kelas & Jurusan (Read Only) -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="24dp"
+                android:background="@color/blue_accent_light"
+                android:padding="12dp"
+                android:layerType="hardware"
+                android:elevation="0dp"
+                android:alpha="0.5"> <!-- Biar agak redup menandakan info -->
 
                 <LinearLayout
                     android:layout_width="0dp"
@@ -169,13 +226,12 @@
                     <TextView
                         android:id="@+id/tvKelas"
                         android:text="-"
-                        android:textColor="@color/blue_primary"
+                        android:textColor="@color/blue_primary_dark"
                         android:textStyle="bold"
-                        android:textSize="18sp"
+                        android:textSize="16sp"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"/>
                 </LinearLayout>
-
                 <LinearLayout
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
@@ -190,13 +246,23 @@
                     <TextView
                         android:id="@+id/tvJurusan"
                         android:text="-"
-                        android:textColor="@color/blue_primary"
+                        android:textColor="@color/blue_primary_dark"
                         android:textStyle="bold"
-                        android:textSize="18sp"
+                        android:textSize="16sp"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"/>
                 </LinearLayout>
             </LinearLayout>
+
+            <!-- Tombol Simpan (Hidden Awalnya) -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnSimpan"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Simpan Perubahan"
+                android:layout_marginTop="20dp"
+                android:visibility="gone"
+                app:backgroundTint="@color/holo_green_dark"/>
 
         </LinearLayout>
     </com.google.android.material.card.MaterialCardView>

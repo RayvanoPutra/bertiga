@@ -3,16 +3,19 @@ package com.example.bankminiviews.ui.login
 import android.content.Intent
 import android.os.Bundle
 import android.widget.Button
+import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import com.example.bankminiviews.R
 import com.example.bankminiviews.data.model.LoginRequest
 import com.example.bankminiviews.data.model.LoginResponse
 import com.example.bankminiviews.data.network.ApiClient
 import com.example.bankminiviews.ui.dashboard.DashboardActivity
+import com.example.bankminiviews.ui.forgotpassword.ForgotPasswordActivity
 import com.example.bankminiviews.util.SessionManager
-import com.google.android.material.dialog.MaterialAlertDialogBuilder // Import Dialog Cantik
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.textfield.TextInputEditText
-import com.google.android.material.textfield.TextInputLayout // Import Layout Input
+import com.google.android.material.textfield.TextInputLayout
+import org.json.JSONObject
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
@@ -21,14 +24,13 @@ class LoginActivity : AppCompatActivity() {
 
     private lateinit var sessionManager: SessionManager
 
-    // Deklarasi View
-    // Kita butuh Layout-nya untuk menampilkan error merah, bukan cuma EditText-nya
+    // Deklarasi View (Sesuai ID di XML baru)
     private lateinit var layoutUsername: TextInputLayout
     private lateinit var layoutPassword: TextInputLayout
-
     private lateinit var etUsername: TextInputEditText
     private lateinit var etPassword: TextInputEditText
     private lateinit var btnLogin: Button
+    private lateinit var tvLupaPass: TextView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -36,135 +38,118 @@ class LoginActivity : AppCompatActivity() {
 
         sessionManager = SessionManager(this)
 
-        // 1. Inisialisasi View
-        // Pastikan ID ini sesuai dengan di activity_login.xml Anda
+        // Inisialisasi View
         layoutUsername = findViewById(R.id.textFieldUsername)
         layoutPassword = findViewById(R.id.textFieldPassword)
-
         etUsername = findViewById(R.id.editTextUsername)
         etPassword = findViewById(R.id.editTextPassword)
         btnLogin = findViewById(R.id.buttonLogin)
+        tvLupaPass = findViewById(R.id.tvLupaPassword)
 
-        // 2. Listener Tombol Login
+        // Tombol Login
         btnLogin.setOnClickListener {
-            val username = etUsername.text.toString().trim()
-            val password = etPassword.text.toString().trim()
+            // Ambil input (Username sekarang berisi No Rekening)
+            val noRekeningInput = etUsername.text.toString().trim()
+            val passwordInput = etPassword.text.toString().trim()
 
-            // Bersihkan error sebelumnya (jika ada)
+            // Reset error
             layoutUsername.error = null
             layoutPassword.error = null
 
-            // Validasi Input Kosong (Desain Merah di Bawah Input)
-            if (validateInput(username, password)) {
-                login(username, password)
+            // Validasi Input
+            if (validateInput(noRekeningInput, passwordInput)) {
+                login(noRekeningInput, passwordInput)
             }
+        }
+
+        // Tombol Lupa Password
+        tvLupaPass.setOnClickListener {
+            startActivity(Intent(this, ForgotPasswordActivity::class.java))
         }
     }
 
-    /**
-     * Fungsi untuk mengecek input kosong.
-     * Jika kosong, tampilkan pesan merah di bawah kotak input.
-     */
-    private fun validateInput(username: String, password: String): Boolean {
+    private fun validateInput(noRekening: String, password: String): Boolean {
         var isValid = true
-
-        if (username.isEmpty()) {
-            layoutUsername.error = "Username tidak boleh kosong" // Muncul teks merah
+        if (noRekening.isEmpty()) {
+            layoutUsername.error = "Nomor Rekening tidak boleh kosong"
             isValid = false
         }
-
         if (password.isEmpty()) {
-            layoutPassword.error = "Password wajib diisi" // Muncul teks merah
+            layoutPassword.error = "Password wajib diisi"
             isValid = false
         }
-
         return isValid
     }
 
-    private fun login(username: String, password: String) {
-        // Ubah tombol jadi loading
+    private fun login(noRekening: String, password: String) {
         setLoadingState(true)
 
-        val loginRequest = LoginRequest(username, password)
+        // Membuat request login (no_rekening & password)
+        val loginRequest = LoginRequest(noRekening, password)
 
         ApiClient.instance.loginNasabah(loginRequest)
             .enqueue(object : Callback<LoginResponse> {
-
                 override fun onResponse(call: Call<LoginResponse>, response: Response<LoginResponse>) {
-                    setLoadingState(false) // Kembalikan tombol
+                    setLoadingState(false)
 
                     if (response.isSuccessful) {
                         val loginResponse = response.body()
-
+                        // Cek token (Kunci JSON: token)
                         if (loginResponse != null && loginResponse.token != null) {
-                            // LOGIN BERHASIL
+                            // Simpan token & pindah halaman
                             sessionManager.saveAuthToken(loginResponse.token)
-
-                            // Langsung pindah (tidak perlu dialog kalau sukses)
                             navigateToDashboard()
                         } else {
-                            // Respons sukses tapi data kosong (Jarang terjadi)
-                            showErrorDialog("Gagal Masuk", "Terjadi kesalahan data. Silakan coba lagi.")
+                            showErrorDialog("Gagal Masuk", "Token tidak ditemukan dalam respons server.")
                         }
                     } else {
-                        // LOGIN GAGAL (Password Salah / Akun Tidak Ditemukan)
-                        // Kode 401 biasanya muncul di sini
-                        handleLoginError(response.code())
+                        // --- MENANGANI ERROR DARI LARAVEL (401, 422, 500) ---
+                        val errorBody = response.errorBody()?.string()
+                        val errorMessage = try {
+                            val jsonObject = JSONObject(errorBody ?: "")
+
+                            // Cek jika ada field 'errors' (Validasi 422 Laravel)
+                            if (jsonObject.has("errors")) {
+                                val errors = jsonObject.getJSONObject("errors")
+                                // Ambil pesan error pertama dari field manapun
+                                val keys = errors.keys()
+                                if (keys.hasNext()) {
+                                    val firstKey = keys.next()
+                                    errors.getJSONArray(firstKey).getString(0)
+                                } else {
+                                    jsonObject.getString("message")
+                                }
+                            } else {
+                                // Ambil pesan error global ('message')
+                                jsonObject.getString("message")
+                            }
+                        } catch (e: Exception) {
+                            "Terjadi kesalahan kode: ${response.code()}"
+                        }
+
+                        showErrorDialog("Login Gagal", errorMessage)
                     }
                 }
 
                 override fun onFailure(call: Call<LoginResponse>, t: Throwable) {
                     setLoadingState(false)
-                    // Error Jaringan (Mati lampu / Server mati)
-                    showErrorDialog("Koneksi Gagal", "Tidak dapat terhubung ke server.\nPastikan internet Anda lancar.")
+                    showErrorDialog("Koneksi Gagal", "Tidak dapat terhubung ke server.\nCek internet atau IP Address laptop Anda.")
                 }
             })
     }
 
-    /**
-     * Menangani pesan error berdasarkan kode HTTP dari server
-     */
-    private fun handleLoginError(code: Int) {
-        when (code) {
-            401 -> {
-                // Ini yang paling sering (Password Salah)
-                showErrorDialog(
-                    "Login Gagal",
-                    "Username atau Password yang Anda masukkan salah.\nSilakan periksa kembali."
-                )
-            }
-            404 -> {
-                showErrorDialog("Terjadi Kesalahan", "Alamat server tidak ditemukan (404).")
-            }
-            500 -> {
-                showErrorDialog("Gangguan Server", "Server sedang mengalami masalah. Mohon coba beberapa saat lagi.")
-            }
-            else -> {
-                showErrorDialog("Gagal", "Terjadi kesalahan dengan kode: $code")
-            }
-        }
-    }
-
-    /**
-     * Menampilkan Dialog Cantik (Pop-up)
-     */
     private fun showErrorDialog(title: String, message: String) {
         MaterialAlertDialogBuilder(this)
             .setTitle(title)
             .setMessage(message)
-            .setPositiveButton("Oke") { dialog, _ ->
-                dialog.dismiss()
-            }
+            .setPositiveButton("Oke") { dialog, _ -> dialog.dismiss() }
             .show()
     }
 
-    /**
-     * Mengatur tampilan tombol saat loading
-     */
     private fun setLoadingState(isLoading: Boolean) {
         if (isLoading) {
             btnLogin.isEnabled = false
-            btnLogin.text = "Sedang Memproses..."
+            btnLogin.text = "Memproses..."
         } else {
             btnLogin.isEnabled = true
             btnLogin.text = "Login"
@@ -173,6 +158,8 @@ class LoginActivity : AppCompatActivity() {
 
     private fun navigateToDashboard() {
         val intent = Intent(this, DashboardActivity::class.java)
+        // Hapus history login agar tombol back tidak kembali ke login
+        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
         startActivity(intent)
         finish()
     }

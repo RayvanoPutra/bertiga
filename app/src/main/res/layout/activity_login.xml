@@ -8,112 +8,149 @@
     android:background="@color/white"
     tools:context=".ui.login.LoginActivity">
 
-    <!-- 1. LOGO ANDA -->
+    <!-- 1. HEADER BACKGROUND (Lengkung Biru) -->
+    <View
+        android:id="@+id/headerBackground"
+        android:layout_width="match_parent"
+        android:layout_height="280dp"
+        android:background="@color/blue_primary"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <!-- LOGO APLIKASI -->
     <ImageView
         android:id="@+id/imageViewLogo"
-        android:layout_width="200dp"
-        android:layout_height="200dp"
-        android:layout_marginTop="60dp"
-        android:contentDescription="Logo Aplikasi"
+        android:layout_width="100dp"
+        android:layout_height="100dp"
+        android:layout_marginTop="40dp"
+        android:contentDescription="Logo Bank Mini"
         android:src="@drawable/logo_login"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <!-- 2. JUDUL SAMBUTAN -->
+    <!-- JUDUL HEADER -->
     <TextView
-        android:id="@+id/textViewTitle"
+        android:id="@+id/textHeaderTitle"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
         android:text="Selamat Datang"
-        android:textColor="@color/blue_primary"
+        android:textColor="@color/white"
         android:textSize="24sp"
         android:textStyle="bold"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/imageViewLogo" />
+        app:layout_constraintTop_toBottomOf="@id/imageViewLogo" />
 
     <TextView
-        android:id="@+id/textViewSubtitle"
+        android:id="@+id/textHeaderSubtitle"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Silakan login untuk melanjutkan"
-        android:textColor="@color/text_secondary"
-        android:textSize="16sp"
+        android:textColor="@color/blue_accent_light"
+        android:textSize="14sp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/textViewTitle" />
+        app:layout_constraintTop_toBottomOf="@id/textHeaderTitle" />
 
-    <!-- 3. INPUT USERNAME -->
-    <com.google.android.material.textfield.TextInputLayout
-        android:id="@+id/textFieldUsername"
-        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-        android:layout_width="0dp"
+    <!-- 2. KARTU LOGIN (Melayang) -->
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/cardLogin"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginStart="24dp"
+        android:layout_marginHorizontal="24dp"
         android:layout_marginTop="32dp"
-        android:layout_marginEnd="24dp"
-        android:hint="Username"
-        app:boxStrokeColor="@color/blue_primary"
-        app:hintTextColor="@color/blue_primary"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/textViewSubtitle"
-        app:startIconDrawable="@drawable/ic_person">
+        app:cardCornerRadius="24dp"
+        app:cardElevation="8dp"
+        app:cardBackgroundColor="@color/white"
+        app:layout_constraintTop_toBottomOf="@id/textHeaderSubtitle">
 
-        <com.google.android.material.textfield.TextInputEditText
-            android:id="@+id/editTextUsername"
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:inputType="text"
-            android:textColor="@color/text_primary" />
+            android:orientation="vertical"
+            android:padding="24dp">
 
-    </com.google.android.material.textfield.TextInputLayout>
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Login Nasabah"
+                android:textColor="@color/text_primary"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:layout_gravity="center"
+                android:layout_marginBottom="24dp"/>
 
-    <!-- 4. INPUT PASSWORD -->
-    <com.google.android.material.textfield.TextInputLayout
-        android:id="@+id/textFieldPassword"
-        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-        android:layout_width="0dp"
+            <!-- Input: NO REKENING (Menggantikan Username) -->
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/textFieldUsername"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                android:hint="Nomor Rekening"
+                app:startIconDrawable="@drawable/ic_person"
+                app:startIconTint="@color/blue_primary"
+                app:boxStrokeColor="@color/blue_primary"
+                app:hintTextColor="@color/blue_primary">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/editTextUsername"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="number"
+                    android:textColor="@color/text_primary"/>
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <!-- Input: PASSWORD -->
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/textFieldPassword"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="24dp"
+                android:hint="Password"
+                app:endIconMode="password_toggle"
+                app:startIconDrawable="@drawable/ic_lock"
+                app:startIconTint="@color/blue_primary"
+                app:boxStrokeColor="@color/blue_primary"
+                app:hintTextColor="@color/blue_primary">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/editTextPassword"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="textPassword"
+                    android:textColor="@color/text_primary"/>
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <!-- Tombol Login -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/buttonLogin"
+                android:layout_width="match_parent"
+                android:layout_height="60dp"
+                android:text="Login"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                app:cornerRadius="12dp"
+                app:backgroundTint="@color/blue_primary"/>
+
+        </LinearLayout>
+    </com.google.android.material.card.MaterialCardView>
+
+    <!-- 3. TOMBOL LUPA PASSWORD (Di Bawah Kartu) -->
+    <TextView
+        android:id="@+id/tvLupaPassword"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="24dp"
+        android:text="Lupa Password?"
+        android:textColor="@color/blue_primary"
+        android:textStyle="bold"
+        android:padding="16dp"
         android:layout_marginTop="16dp"
-        android:layout_marginEnd="24dp"
-        android:hint="Password"
-        app:boxStrokeColor="@color/blue_primary"
-        app:hintTextColor="@color/blue_primary"
-        app:layout_constraintEnd_toEndOf="parent"
+        android:background="?attr/selectableItemBackground"
+        app:layout_constraintTop_toBottomOf="@id/cardLogin"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/textFieldUsername"
-        app:passwordToggleEnabled="true"
-        app:startIconDrawable="@drawable/ic_lock">
-
-        <com.google.android.material.textfield.TextInputEditText
-            android:id="@+id/editTextPassword"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:inputType="textPassword"
-            android:textColor="@color/text_primary" />
-
-    </com.google.android.material.textfield.TextInputLayout>
-
-    <!-- 5. TOMBOL LOGIN -->
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/buttonLogin"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="24dp"
-        android:layout_marginTop="24dp"
-        android:layout_marginEnd="24dp"
-        android:paddingTop="14dp"
-        android:paddingBottom="14dp"
-        android:text="Login"
-        android:textSize="16sp"
-        app:backgroundTint="@color/blue_primary"
-        app:cornerRadius="8dp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/textFieldPassword" />
+        app:layout_constraintEnd_toEndOf="parent"/>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
