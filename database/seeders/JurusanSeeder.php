@@ -17,20 +17,17 @@ class JurusanSeeder extends Seeder
     \App\Models\Jurusan::create([
         'kode_jurusan' => 'RPL',
         'nama_jurusan' => 'Rekayasa Perangkat Lunak',
-        'kode_tahun_ajaran' => 'TA-2425'
     ]);
 
     \App\Models\Jurusan::create([
         'kode_jurusan' => 'AKL',
         'nama_jurusan' => 'Akuntansi Keuangan dan Lembaga',
-        'kode_tahun_ajaran' => 'TA-2425'
     ]);
 
     // TAMBAHKAN INI AGAR TKJ TERDAFTAR
     \App\Models\Jurusan::create([
         'kode_jurusan' => 'TKJ',
         'nama_jurusan' => 'Teknik Komputer dan Jaringan',
-        'kode_tahun_ajaran' => 'TA-2425'
     ]);
 }
 }

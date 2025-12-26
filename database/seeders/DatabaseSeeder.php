@@ -13,9 +13,9 @@ class DatabaseSeeder extends Seeder
     {
         $this->call([
             // Data Master (Induk)
-            // TahunAjaranSeeder::class,
-            // JurusanSeeder::class,
-            // KelasSeeder::class,
+            TahunAjaranSeeder::class,
+            JurusanSeeder::class,
+            KelasSeeder::class,
             JenisTransaksiSeeder::class,
             PetugasSeeder::class,
             PengaturanSeeder::class, // (Jika ada)

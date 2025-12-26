@@ -6,13 +6,15 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
 
-class OtpMail extends Mailable
+class LaporanOtpMail extends Mailable
 {
     use Queueable, SerializesModels;
 
     public $otp;
+
     public $nama;
 
+    // Terima data OTP saat class dipanggil
     public function __construct($otp, $nama)
     {
         $this->otp = $otp;
@@ -21,7 +23,7 @@ class OtpMail extends Mailable
 
     public function build()
     {
-        return $this->subject('Kode OTP Laporan Keuangan - Bank Mini')
-                    ->view('emails.otp'); // Kita akan buat view ini di langkah selanjutnya
+        return $this->subject('Kode Keamanan Laporan PDF Anda')
+            ->view('emails.otp_laporan');
     }
 }

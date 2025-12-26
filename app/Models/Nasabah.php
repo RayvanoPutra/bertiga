@@ -20,6 +20,19 @@ class Nasabah extends Authenticatable
         'password',
         'remember_token',
     ];
+
+    protected $fillable = [
+        'no_rekening',
+        'no_induk',
+        'nama',
+        'email',
+        'password',
+        'no_telp',
+        'jenis_rekening',
+        'kode_kelas',
+        'saldo',
+        'status',
+    ];
     
     public function kelas()
     {

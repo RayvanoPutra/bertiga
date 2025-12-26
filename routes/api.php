@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\LaporanController;
 use App\Http\Controllers\Api\MasterController;
 use App\Http\Controllers\Api\ForgotPasswordController;
 
+
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -37,6 +38,8 @@ Route::post('/forgot-password/reset', [ForgotPasswordController::class, 'resetPa
 // RUTE DILINDUNGI (Admin & Super Admin)
 // ===========================================
 Route::middleware('auth:sanctum')->group(function () {
+
+    Route::post('/laporan/download-encrypted', [LaporanController::class, 'downloadEncryptedPdf']);
 
     Route::post('/logout', [AuthController::class, 'logout']);
 
@@ -116,7 +119,7 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::delete('/kelas/{kode_kelas}', [MasterDataController::class, 'deleteKelas']);
 
             // Pengaturan Biaya
-            Route::get('/pengaturan/biaya-admin', [MasterController::class, 'getBiayaAdmin']);
+            Route::get('/pengaturan/biaya-admin', [MasterDataController::class, 'getBiayaAdmin']);
 
         });
 

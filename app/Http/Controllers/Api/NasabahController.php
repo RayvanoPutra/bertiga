@@ -155,9 +155,10 @@ if ($validator->fails()) {
 
         // 5. Eksekusi Database Transaction
         try {
+
             DB::beginTransaction();
 
-            // A. Simpan Data Nasabah
+            // A. Simpan Data   Nasabah
             $nasabah = Nasabah::create([
                 'no_rekening' => $no_rekening_baru,
                 'no_induk' => $request->no_induk,
