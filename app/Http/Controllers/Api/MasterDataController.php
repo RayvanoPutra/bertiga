@@ -237,7 +237,7 @@ public function deleteKelas($kode_kelas)
 }
 
     // ==========================================
-    // PENGATURAN
+    // PETUGAS
     // ==========================================
 
 public function getPetugas() {

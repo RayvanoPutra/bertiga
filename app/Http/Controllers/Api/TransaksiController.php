@@ -88,67 +88,95 @@ class TransaksiController extends Controller
 
     // --- APPROVE ---
     public function approve(Request $request, $kode_transaksi)
-    {
-        try {
-            return DB::transaction(function () use ($request, $kode_transaksi) {
-                $transaksi = Transaksi::with('jenisTransaksi')
-                    ->where('kode_transaksi', $kode_transaksi)
-                    ->firstOrFail();
+{
+    try {
+        return DB::transaction(function () use ($request, $kode_transaksi) {
+            // 1. Ambil data transaksi pending
+            $transaksi = Transaksi::with('jenisTransaksi')
+                ->where('kode_transaksi', $kode_transaksi)
+                ->firstOrFail();
 
-                if ($transaksi->status != 'pending') {
-                    throw ValidationException::withMessages(['status' => 'Transaksi sudah diproses.']);
+            if ($transaksi->status != 'pending') {
+                throw ValidationException::withMessages(['status' => 'Transaksi sudah diproses.']);
+            }
+
+            // 2. Ambil data nasabah dengan lock untuk keamanan saldo
+            $nasabah = Nasabah::where('no_rekening', $transaksi->no_rekening)->lockForUpdate()->firstOrFail();
+            $saldo_awal_nasabah = (int)$nasabah->saldo;
+            $jumlah_trx = (int)$transaksi->jumlah;
+            $jenisNama = $transaksi->jenisTransaksi->nama_jenis;
+
+            // 3. Hitung Saldo Dasar (Setor/Tarik)
+            if ($jenisNama == 'Setor Tunai') {
+                $saldo_skrg = $saldo_awal_nasabah + $jumlah_trx;
+            } else {
+                if ($saldo_awal_nasabah < $jumlah_trx) {
+                    throw ValidationException::withMessages(['saldo' => 'Saldo tidak mencukupi.']);
                 }
+                $saldo_skrg = $saldo_awal_nasabah - $jumlah_trx;
+            }
 
-                $nasabah = Nasabah::where('no_rekening', $transaksi->no_rekening)->lockForUpdate()->firstOrFail();
+            // 4. LOGIKA POTONGAN ADMIN BERKALA (ANNIVERSARY)
+            $keterangan = $transaksi->keterangan_nasabah;
+            
+            if ($jenisNama == 'Setor Tunai' && $nasabah->jenis_rekening == 'siswa') {
+                $settingBiaya = Pengaturan::where('nama_pengaturan', 'biaya_admin')->first();
+                $nominalBiaya = $settingBiaya ? (int)$settingBiaya->nilai : 14000;
+                
+                $tglDaftar = $nasabah->created_at; // Contoh: 2025-02-05
+                $sekarang = now();
 
-                $saldo_awal_nasabah = (int)$nasabah->saldo;
-                $jumlah_trx = (int)$transaksi->jumlah;
-                $jenisNama = $transaksi->jenisTransaksi->nama_jenis;
+                // Validasi: Cek apakah hari dan bulan ini sama dengan hari dan bulan pendaftaran
+                $isHariAnniversary = ($sekarang->day == $tglDaftar->day && $sekarang->month == $tglDaftar->month);
 
-                if ($jenisNama == 'Setor Tunai') {
-                    $saldo_skrg = $saldo_awal_nasabah + $jumlah_trx;
-                } else {
-                    if ($saldo_awal_nasabah < $jumlah_trx) {
-                        throw ValidationException::withMessages(['saldo' => 'Saldo tidak mencukupi.']);
-                    }
-                    $saldo_skrg = $saldo_awal_nasabah - $jumlah_trx;
-                }
-
-                $keterangan = $transaksi->keterangan_nasabah;
-                if ($jenisNama == 'Setor Tunai' && $nasabah->jenis_rekening == 'siswa') {
-                    $settingBiaya = Pengaturan::where('nama_pengaturan', 'biaya_admin')->first();
-                    $nominalBiaya = $settingBiaya ? (int)$settingBiaya->nilai : 14000;
-                    $tahunIni = date('Y');
-
-                    $sudahBayar = Transaksi::where('no_rekening', $nasabah->no_rekening)
+                if ($isHariAnniversary) {
+                    // Cek apakah tahun ini sudah dipotong (agar tidak double potong jika setor 2x di hari yang sama)
+                    $sudahBayarTahunIni = Transaksi::where('no_rekening', $nasabah->no_rekening)
+                        ->where('kode_jenis', 'AWAL') // Kode untuk Biaya Admin
                         ->where('status', 'success')
-                        ->whereYear('tgl_transaksi', $tahunIni)
-                        ->where('keterangan_nasabah', 'like', "%Admin%Thn $tahunIni%")
+                        ->whereYear('tgl_transaksi', $sekarang->year)
                         ->exists();
 
-                    if (!$sudahBayar && $saldo_skrg >= $nominalBiaya) {
+                    if (!$sudahBayarTahunIni && $saldo_skrg >= $nominalBiaya) {
+                        // POTONG SALDO
                         $saldo_skrg -= $nominalBiaya;
-                        $keterangan .= " (Potongan Admin Thn $tahunIni: Rp " . number_format($nominalBiaya, 0, ',', '.') . ")";
+
+                        // BUAT TRANSAKSI DEBIT TERPISAH (Vaidasi Visual di Android)
+                        Transaksi::create([
+                            'kode_transaksi' => 'ADM-' . time() . '-' . $nasabah->no_rekening,
+                            'no_rekening' => $nasabah->no_rekening,
+                            'kode_petugas' => $request->user()->kode_petugas,
+                            'kode_jenis' => 'AWAL', // Harus 'AWAL' agar di Android warna Merah
+                            'tgl_transaksi' => $sekarang,
+                            'jumlah' => $nominalBiaya,
+                            'status' => 'success',
+                            'keterangan_nasabah' => 'Biaya Admin Tahunan Periode ' . $sekarang->year,
+                        ]);
+
+                        $keterangan .= " (Auto-Debit Admin " . $sekarang->year . ")";
                     }
                 }
+            }
 
-                $nasabah->update(['saldo' => $saldo_skrg]);
+            // 5. Update Saldo Nasabah
+            $nasabah->update(['saldo' => $saldo_skrg]);
 
-                $transaksi->update([
-                    'status' => 'success',
-                    'kode_petugas' => $request->user()->kode_petugas,
-                    'tgl_transaksi' => now(),
-                    'saldo_sebelum' => $saldo_awal_nasabah,
-                    'saldo_setelah' => $saldo_skrg,
-                    'keterangan_nasabah' => $keterangan
-                ]);
+            // 6. Update Status Transaksi Utama
+            $transaksi->update([
+                'status' => 'success',
+                'kode_petugas' => $request->user()->kode_petugas,
+                'tgl_transaksi' => now(),
+                'saldo_sebelum' => $saldo_awal_nasabah,
+                'saldo_setelah' => $saldo_skrg,
+                'keterangan_nasabah' => $keterangan
+            ]);
 
-                return response()->json(['message' => 'Transaksi berhasil disetujui.']);
-            });
-        } catch (\Exception $e) {
-            return response()->json(['message' => $e->getMessage()], 500);
-        }
+            return response()->json(['message' => 'Transaksi berhasil disetujui.']);
+        });
+    } catch (\Exception $e) {
+        return response()->json(['message' => $e->getMessage()], 500);
     }
+}
 
     // --- REJECT ---
     public function reject(Request $request, $kode_transaksi)
