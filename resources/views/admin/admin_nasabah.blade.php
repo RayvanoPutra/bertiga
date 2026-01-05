@@ -251,6 +251,58 @@
                 finally { btn.disabled = false; btn.innerText = "Simpan Nasabah"; }
             });
         }
+
+        // --- PROSES UPDATE DATA NASABAH ---
+const formEdit = document.getElementById('formEditNasabah');
+if (formEdit) {
+    formEdit.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const norek = document.getElementById('edit_no_rekening').value;
+        const btn = document.getElementById('btnUpdate');
+        
+        btn.disabled = true;
+        btn.innerText = "Memperbarui...";
+
+        const payload = {
+            nama: document.getElementById('edit_nama').value,
+            email: document.getElementById('edit_email').value,
+            no_telp: document.getElementById('edit_no_telp').value
+        };
+
+        try {
+            const response = await fetch(`${BASE_URL}/master/nasabah/${norek}`, {
+                method: 'PUT', // Atau PATCH sesuai API kamu
+                headers: { 
+                    'Authorization': `Bearer ${authToken}`, 
+                    'Content-Type': 'application/json', 
+                    'Accept': 'application/json' 
+                },
+                body: JSON.stringify(payload)
+            });
+
+            const result = await response.json();
+
+            if (response.ok) {
+                alert("✅ Data nasabah berhasil diperbarui!");
+                toggleModal('modalEdit'); // Tutup modal
+                fetchNasabah(); // Refresh tabel tanpa reload halaman
+            } else if (response.status === 422) {
+                let errorMsg = "⚠️ Gagal Validasi:\n";
+                Object.values(result.errors).forEach(err => { errorMsg += `• ${err[0]}\n`; });
+                alert(errorMsg);
+            } else {
+                alert("❌ Gagal: " + (result.message || "Error server"));
+            }
+        } catch (e) {
+            console.error(e);
+            alert("Error koneksi server saat memperbarui data.");
+        } finally {
+            btn.disabled = false;
+            btn.innerText = "Simpan Perubahan";
+        }
+    });
+}
     });
 
     // --- LOAD MASTER DATA (DROPDOWNS & BIAYA) ---
