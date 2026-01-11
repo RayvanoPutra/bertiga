@@ -99,6 +99,38 @@
     const authToken = localStorage.getItem('petugas_token');
 
     if (!authToken) window.location.href = "{{ \Illuminate\Support\Facades\URL::to('/admin/login') }}";
+    
+    const originalFetch = window.fetch;
+    window.fetch = async (...args) => {
+        let [resource, config] = args;
+        
+        // Pastikan config object ada
+        if (!config) config = {};
+        if (!config.headers) config.headers = {};
+
+        // Auto-Inject Header Authorization (Biar tidak capek ngetik ulang)
+        // Ini akan menimpa atau melengkapi header yang sudah ada
+        config.headers['Authorization'] = `Bearer ${authToken}`;
+        config.headers['Accept'] = 'application/json';
+
+        // Lakukan Request Asli
+        const response = await originalFetch(resource, config);
+
+        // CEK STATUS: Jika 401 (Unauthorized/Token Expired)
+        if (response.status === 401) {
+            alert("Sesi Anda telah berakhir. Silakan login kembali.");
+            localStorage.removeItem('petugas_token'); // Hapus token
+            localStorage.removeItem('nama_petugas'); 
+            localStorage.removeItem('role');
+            
+            // Redirect ke Login
+            window.location.href = "{{ \Illuminate\Support\Facades\URL::to('/admin/login') }}";
+            return Promise.reject('Unauthorized');
+        }
+
+        return response;
+    };
+    // ================================================================
 
     document.addEventListener('DOMContentLoaded', () => { loadDashboardData(); });
 

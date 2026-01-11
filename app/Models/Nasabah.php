@@ -6,8 +6,9 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use PHPOpenSourceSaver\JWTAuth\Contracts\JWTSubject;
 
-class Nasabah extends Authenticatable
+class Nasabah extends Authenticatable implements JWTSubject
 {
     use HasFactory, HasApiTokens;
 
@@ -37,5 +38,17 @@ class Nasabah extends Authenticatable
     public function kelas()
     {
         return $this->belongsTo(Kelas::class, 'kode_kelas', 'kode_kelas');
+    }
+    public function getJWTIdentifier()
+    {
+        return $this->getKey(); // Mengambil no_rekening sebagai ID utama di dalam token
+    }
+
+    public function getJWTCustomClaims()
+    {
+        return [
+            'role' => 'nasabah', // Kita tanamkan label 'nasabah' di dalam token
+            'no_rekening' => $this->no_rekening
+        ];
     }
 }

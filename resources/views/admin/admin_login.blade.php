@@ -77,7 +77,7 @@
 
         try {
             // Kita gunakan rute login langsung agar lebih cepat
-            const targetUrl = `${urlInput}/login/petugas`;
+            const targetUrl = `${urlInput}/auth/petugas/login`;
             
             const response = await fetch(targetUrl, {
                 method: 'POST',

@@ -11,6 +11,7 @@
         "laravel/sanctum": "^4.0",
         "laravel/tinker": "^2.9",
         "mpdf/mpdf": "^8.2",
+        "php-open-source-saver/jwt-auth": "^2.3",
         "tecnickcom/tcpdf": "^6.10"
     },
     "require-dev": {

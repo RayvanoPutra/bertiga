@@ -42,12 +42,12 @@ return [
         ],
 
         'petugas' => [
-            'driver' => 'sanctum',
+            'driver' => 'jwt',
             'provider' => 'petugas',
         ],
 
         'nasabah' => [
-            'driver' => 'sanctum',
+            'driver' => 'jwt',
             'provider' => 'nasabah',
         ],
     ],
