@@ -8,169 +8,87 @@
     android:background="@color/white"
     tools:context=".ui.laporan.LaporanActivity">
 
-    <!-- 1. HEADER BACKGROUND -->
     <View
         android:id="@+id/headerBackground"
         android:layout_width="match_parent"
-        android:layout_height="220dp"
+        android:layout_height="180dp"
         android:background="@color/blue_primary"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <!-- Toolbar Transparan -->
     <com.google.android.material.appbar.MaterialToolbar
         android:id="@+id/toolbarLaporan"
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
-        android:background="@android:color/transparent"
         app:layout_constraintTop_toTopOf="parent"
         app:navigationIcon="@drawable/ic_arrow_back"
         app:navigationIconTint="@color/white"
-        app:title="Unduh Laporan"
+        app:title="Cetak Laporan Keuangan"
         app:titleTextColor="@color/white" />
 
-    <!-- 2. KARTU UTAMA (Keamanan) -->
     <com.google.android.material.card.MaterialCardView
-        android:id="@+id/cardSecurity"
+        android:id="@+id/cardFilter"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginHorizontal="24dp"
-        android:layout_marginTop="32dp"
-        app:cardCornerRadius="24dp"
+        android:layout_marginTop="20dp"
+        app:cardCornerRadius="16dp"
         app:cardElevation="8dp"
-        app:cardBackgroundColor="@color/white"
         app:layout_constraintTop_toBottomOf="@id/toolbarLaporan">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:padding="32dp"
-            android:gravity="center">
-
-            <!-- Ikon Gembok Besar -->
-            <ImageView
-                android:layout_width="80dp"
-                android:layout_height="80dp"
-                android:src="@drawable/ic_lock"
-                app:tint="@color/blue_primary"
-                android:background="@drawable/bg_circle_light_blue"
-                android:padding="20dp"
-                android:layout_marginBottom="24dp"/>
-            <!-- Note: Anda bisa buat bg_circle_light_blue.xml atau hapus baris background jika belum ada -->
+            android:padding="20dp">
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Verifikasi Keamanan"
-                android:textSize="20sp"
-                android:textStyle="bold"
-                android:textColor="@color/text_primary"
-                android:layout_marginBottom="8dp"/>
+                android:text="Pilih Rentang Laporan"
+                android:textColor="@color/blue_primary"
+                android:textSize="18sp"
+                android:textStyle="bold" />
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Demi keamanan data keuangan Anda, kami perlu memverifikasi identitas melalui kode OTP yang dikirim ke email."
-                android:textSize="14sp"
+                android:layout_marginTop="16dp"
+                android:text="Dari Bulan:"
                 android:textColor="@color/text_secondary"
-                android:textAlignment="center"
-                android:lineSpacingExtra="4dp"/>
+                android:textSize="14sp" />
+
+            <Spinner
+                android:id="@+id/spinnerBulanMulai"
+                android:layout_width="match_parent"
+                android:layout_height="48dp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="Sampai Bulan:"
+                android:textColor="@color/text_secondary"
+                android:textSize="14sp" />
+
+            <Spinner
+                android:id="@+id/spinnerBulanSelesai"
+                android:layout_width="match_parent"
+                android:layout_height="48dp" />
 
         </LinearLayout>
-
     </com.google.android.material.card.MaterialCardView>
 
-    <!-- 3. AREA AKSI (Request & Input) -->
-    <LinearLayout
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnCetakLaporan"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="24dp"
-        app:layout_constraintTop_toBottomOf="@id/cardSecurity"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintVertical_bias="0.1">
-
-        <!-- STEP 1: Tombol Request -->
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnRequestOtp"
-            android:layout_width="match_parent"
-            android:layout_height="64dp"
-            android:text="Kirim Kode OTP ke Email"
-            android:textSize="16sp"
-            android:textStyle="bold"
-            app:cornerRadius="16dp"
-            app:backgroundTint="@color/blue_primary"
-            app:elevation="4dp"/>
-
-        <!-- STEP 2: Input OTP (Hidden by default) -->
-        <LinearLayout
-            android:id="@+id/layoutInputOtp"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:visibility="gone"
-            tools:visibility="visible"> <!-- tools:visibility untuk preview di editor -->
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Masukkan Kode OTP"
-                android:textColor="@color/text_secondary"
-                android:textSize="14sp"
-                android:layout_marginBottom="8dp"
-                android:layout_gravity="start"/>
-
-            <com.google.android.material.textfield.TextInputLayout
-                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                app:boxCornerRadiusTopStart="12dp"
-                app:boxCornerRadiusTopEnd="12dp"
-                app:boxCornerRadiusBottomStart="12dp"
-                app:boxCornerRadiusBottomEnd="12dp"
-                app:boxStrokeColor="@color/blue_primary"
-                app:boxStrokeWidth="2dp">
-
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/etOtp"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:inputType="number"
-                    android:maxLength="6"
-                    android:textAlignment="center"
-                    android:letterSpacing="0.3"
-                    android:textSize="24sp"
-                    android:textStyle="bold"
-                    android:textColor="@color/text_primary"
-                    android:padding="16dp"/>
-            </com.google.android.material.textfield.TextInputLayout>
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnVerify"
-                android:layout_width="match_parent"
-                android:layout_height="60dp"
-                android:text="Verifikasi &amp; Unduh PDF"
-                android:textSize="16sp"
-                android:textStyle="bold"
-                android:layout_marginTop="24dp"
-                app:cornerRadius="16dp"
-                app:backgroundTint="@color/holo_green_dark"
-                app:icon="@drawable/ic_laporan"
-                app:iconGravity="textStart"/>
-
-            <TextView
-                android:id="@+id/textResend"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Kirim ulang kode?"
-                android:textColor="@color/blue_primary"
-                android:textSize="14sp"
-                android:textStyle="bold"
-                android:layout_marginTop="16dp"
-                android:layout_gravity="center"/>
-
-        </LinearLayout>
-
-    </LinearLayout>
+        android:layout_height="64dp"
+        android:layout_marginHorizontal="24dp"
+        android:layout_marginTop="32dp"
+        android:text="UNDUH LAPORAN PDF"
+        android:textStyle="bold"
+        app:backgroundTint="@color/blue_primary"
+        app:cornerRadius="16dp"
+        app:icon="@drawable/ic_laporan"
+        app:layout_constraintTop_toBottomOf="@id/cardFilter" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

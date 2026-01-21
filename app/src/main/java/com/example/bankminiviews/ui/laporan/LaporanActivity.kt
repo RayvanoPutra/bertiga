@@ -1,132 +1,134 @@
 package com.example.bankminiviews.ui.laporan
 
-import android.content.Intent
-import android.net.Uri
 import android.os.Bundle
-import android.view.View
-import android.widget.Button
-import android.widget.LinearLayout
+import android.os.Environment
+import android.util.Log
+import android.widget.ArrayAdapter
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import com.example.bankminiviews.R
-import com.example.bankminiviews.data.model.LaporanResponse
-import com.example.bankminiviews.data.model.OtpRequest
-import com.example.bankminiviews.data.model.SetorResponse
 import com.example.bankminiviews.data.network.ApiClient
+import com.example.bankminiviews.databinding.ActivityLaporanBinding
 import com.example.bankminiviews.util.SessionManager
-import com.google.android.material.textfield.TextInputEditText
-import org.json.JSONObject // <-- Import untuk baca JSON error
+import okhttp3.ResponseBody
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
+import java.io.*
+import android.content.Intent
+import android.app.DownloadManager
+import android.media.MediaScannerConnection
+import android.net.Uri
 
 class LaporanActivity : AppCompatActivity() {
 
+    private lateinit var binding: ActivityLaporanBinding
+    // Gunakan camelCase untuk variabel agar berbeda dengan nama Class-nya
     private lateinit var sessionManager: SessionManager
-    private lateinit var btnRequestOtp: Button
-    private lateinit var btnVerify: Button
-    private lateinit var etOtp: TextInputEditText
-    private lateinit var layoutInputOtp: LinearLayout
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_laporan)
+        binding = ActivityLaporanBinding.inflate(layoutInflater)
+        setContentView(binding.root)
 
         sessionManager = SessionManager(this)
+        setupSpinner()
 
-        btnRequestOtp = findViewById(R.id.btnRequestOtp)
-        btnVerify = findViewById(R.id.btnVerify)
-        etOtp = findViewById(R.id.etOtp)
-        layoutInputOtp = findViewById(R.id.layoutInputOtp)
+        binding.btnCetakLaporan.setOnClickListener {
+            val mulai = binding.spinnerBulanMulai.selectedItem.toString()
+            val selesai = binding.spinnerBulanSelesai.selectedItem.toString()
 
-        btnRequestOtp.setOnClickListener {
-            requestOtpFromServer()
+            // Jalankan proses download
+            mulaiDownload(mulai, selesai)
         }
 
-        btnVerify.setOnClickListener {
-            val otp = etOtp.text.toString()
-            if (otp.length < 6) {
-                Toast.makeText(this, "Masukkan 6 digit kode", Toast.LENGTH_SHORT).show()
-            } else {
-                verifyOtpAndDownload(otp)
-            }
+        binding.toolbarLaporan.setNavigationOnClickListener {
+            onBackPressedDispatcher.onBackPressed()
         }
     }
 
-    private fun requestOtpFromServer() {
-        val token = sessionManager.fetchAuthToken() ?: return
-
-        btnRequestOtp.isEnabled = false
-        btnRequestOtp.text = "Mengirim..."
-
-        ApiClient.instance.requestOtp(token).enqueue(object : Callback<SetorResponse> {
-            override fun onResponse(call: Call<SetorResponse>, response: Response<SetorResponse>) {
-                btnRequestOtp.isEnabled = true
-
-                if (response.isSuccessful) {
-                    Toast.makeText(this@LaporanActivity, "Kode terkirim ke email!", Toast.LENGTH_LONG).show()
-                    btnRequestOtp.visibility = View.GONE
-                    layoutInputOtp.visibility = View.VISIBLE
-                } else {
-                    // --- PERBAIKAN: BACA ERROR ASLI DARI SERVER ---
-                    val errorMsg = try {
-                        val errorBodyString = response.errorBody()?.string()
-                        val jsonObject = JSONObject(errorBodyString ?: "")
-                        jsonObject.getString("message") // Ambil pesan dari Laravel
-                    } catch (e: Exception) {
-                        "Gagal mengirim email (Error ${response.code()})"
-                    }
-
-                    Toast.makeText(this@LaporanActivity, errorMsg, Toast.LENGTH_LONG).show()
-                }
-            }
-
-            override fun onFailure(call: Call<SetorResponse>, t: Throwable) {
-                btnRequestOtp.isEnabled = true
-                btnRequestOtp.text = "Kirim Kode ke Email Saya"
-                Toast.makeText(this@LaporanActivity, "Koneksi Gagal: ${t.message}", Toast.LENGTH_SHORT).show()
-            }
-        })
+    private fun setupSpinner() {
+        val daftarBulan = arrayOf("Januari", "Februari", "Maret", "April", "Mei", "Juni",
+            "Juli", "Agustus", "September", "Oktober", "November", "Desember")
+        val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, daftarBulan)
+        binding.spinnerBulanMulai.adapter = adapter
+        binding.spinnerBulanSelesai.adapter = adapter
     }
 
-    private fun verifyOtpAndDownload(otpCode: String) {
-        val token = sessionManager.fetchAuthToken() ?: return
+    private fun mulaiDownload(mulai: String, selesai: String) {
+        // Panggil fetchAuthToken() sesuai class SessionManager kamu
+        val token = sessionManager.fetchAuthToken()
 
-        btnVerify.isEnabled = false
-        btnVerify.text = "Memverifikasi..."
+        if (token != null) {
+            Toast.makeText(this, "Sedang mengunduh laporan...", Toast.LENGTH_SHORT).show()
 
-        val request = OtpRequest(otpCode)
+            // Token sudah mengandung "Bearer " dari SessionManager
+            ApiClient.instance.downloadLaporan(token, mulai, selesai).enqueue(object : Callback<ResponseBody> {
+                override fun onResponse(call: Call<ResponseBody>, response: Response<ResponseBody>) {
+                    if (response.isSuccessful) {
+                        val fileBerhasil = saveFileToDisk(response.body(), "Laporan_${mulai}_${selesai}.pdf")
+                        if (fileBerhasil) {
+                            Toast.makeText(applicationContext, "Laporan berhasil disimpan di folder Download", Toast.LENGTH_LONG).show()
+                            val intent = Intent(DownloadManager.ACTION_VIEW_DOWNLOADS)
+                            startActivity(intent)
+                        }
+                        if (fileBerhasil) {
+                            Toast.makeText(applicationContext, "Berhasil! Klik notifikasi untuk buka.", Toast.LENGTH_LONG).show()
 
-        ApiClient.instance.verifyLaporanOtp(token, request).enqueue(object : Callback<LaporanResponse> {
-            override fun onResponse(call: Call<LaporanResponse>, response: Response<LaporanResponse>) {
-                btnVerify.isEnabled = true
-                btnVerify.text = "Verifikasi & Download PDF"
-
-                if (response.isSuccessful) {
-                    val url = response.body()?.urlPdf
-                    if (!url.isNullOrEmpty()) {
-                        val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
-                        startActivity(browserIntent)
-                        finish()
+                            // Fungsi untuk membuka folder Download secara otomatis
+                            val intent = Intent(DownloadManager.ACTION_VIEW_DOWNLOADS)
+                            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                            startActivity(intent)
+                        }
                     } else {
-                        Toast.makeText(this@LaporanActivity, "Link PDF tidak ditemukan", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(applicationContext, "Gagal mengunduh laporan", Toast.LENGTH_SHORT).show()
                     }
-                } else {
-                    // Tampilkan error verifikasi juga
-                    val errorMsg = try {
-                        val json = JSONObject(response.errorBody()?.string() ?: "")
-                        json.getString("message")
-                    } catch (e: Exception) {
-                        "Kode OTP Salah / Kadaluarsa"
-                    }
-                    Toast.makeText(this@LaporanActivity, errorMsg, Toast.LENGTH_LONG).show()
                 }
-            }
 
-            override fun onFailure(call: Call<LaporanResponse>, t: Throwable) {
-                btnVerify.isEnabled = true
-                Toast.makeText(this@LaporanActivity, "Koneksi Gagal", Toast.LENGTH_SHORT).show()
+                override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
+                    Toast.makeText(applicationContext, "Error: ${t.message}", Toast.LENGTH_SHORT).show()
+                }
+            })
+        } else {
+            Toast.makeText(this, "Sesi berakhir, silakan login kembali", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun saveFileToDisk(body: ResponseBody?, fileName: String): Boolean {
+        if (body == null) return false
+
+        return try {
+            val file = File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), fileName)
+            var inputStream: InputStream? = null
+            var outputStream: OutputStream? = null
+
+            try {
+                val fileReader = ByteArray(4096)
+                inputStream = body.byteStream()
+                outputStream = FileOutputStream(file)
+
+                while (true) {
+                    val read = inputStream.read(fileReader)
+                    if (read == -1) break
+                    outputStream.write(fileReader, 0, read)
+                }
+                outputStream.flush()
+                MediaScannerConnection.scanFile(
+                    this,
+                    arrayOf(file.absolutePath),
+                    null
+                ) { path, uri ->
+                    // File sekarang sudah terdaftar di sistem
+                    Log.d("Download", "File terdaftar di: $path")
+                }
+                true
+            } catch (e: IOException) {
+                false
+            } finally {
+                inputStream?.close()
+                outputStream?.close()
             }
-        })
+        } catch (e: IOException) {
+            false
+        }
     }
 }

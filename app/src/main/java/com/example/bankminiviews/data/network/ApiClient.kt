@@ -10,7 +10,7 @@ import java.util.concurrent.TimeUnit
 object ApiClient {
 
     // Pastikan IP ini sesuai dengan IP Laptop Anda saat ini (cek ipconfig)
-    private const val BASE_URL = "http://192.168.0.103:8000/api/"
+    private const val BASE_URL = "http://192.168.30.253:8000/api/"
 
     val instance: ApiService by lazy {
 

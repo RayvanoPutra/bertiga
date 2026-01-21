@@ -170,9 +170,9 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="Laporan"
+                android:text="Cetak"
                 android:textColor="@color/text_primary"
-                app:icon="@drawable/ic_laporan"
+                app:icon="@drawable/ic_cetak_laporan"
                 app:iconTint="@color/blue_primary"
                 app:iconGravity="textTop"
                 app:iconPadding="8dp" />

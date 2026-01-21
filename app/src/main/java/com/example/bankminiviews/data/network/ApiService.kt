@@ -19,6 +19,9 @@ import retrofit2.http.GET
 import retrofit2.http.Header
 import retrofit2.http.POST
 import retrofit2.http.PUT
+import okhttp3.ResponseBody
+import retrofit2.http.Query
+import retrofit2.http.Streaming
 
 /**
  * ApiService adalah "Buku Menu" aplikasi.
@@ -98,20 +101,22 @@ interface ApiService {
         @Header("Authorization") token: String
     ): Call<List<HistoryItemResponse>>
 
-    // --- FITUR LAPORAN (OTP) ---
-
     // 1. Minta Kode OTP Laporan
-    @POST("laporan/request-otp")
-    fun requestOtp(
-        @Header("Authorization") token: String
-    ): Call<SetorResponse> // Pakai SetorResponse (isinya cuma message)
+    // --- FITUR CETAK LAPORAN KEUANGAN (TANPA OTP) ---
 
-    // 2. Kirim OTP & Download PDF
-    @POST("laporan/verify")
-    fun verifyLaporanOtp(
+    /**
+     * Menu 6: UNDUH LAPORAN PDF (RENTANG BULAN)
+     * - Alamat: /api/transaksi/cetak-laporan
+     * - Parameter: bulan_mulai & bulan_selesai (Contoh: "Januari" ke "Maret")
+     * - Output: ResponseBody (Karena kita mengunduh file biner berupa PDF)[cite: 328, 360].
+     */
+    @GET("transaksi/cetak-laporan")
+    @Streaming // Digunakan agar Retrofit tidak memuat seluruh file besar ke memori sekaligus
+    fun downloadLaporan(
         @Header("Authorization") token: String,
-        @Body request: OtpRequest
-    ): Call<LaporanResponse>
+        @Query("bulan_mulai") bulanMulai: String,
+        @Query("bulan_selesai") bulanSelesai: String
+    ): Call<ResponseBody>
 
     // --- UPDATE PROFIL ---
 

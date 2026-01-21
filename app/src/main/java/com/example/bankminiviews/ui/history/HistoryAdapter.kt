@@ -86,15 +86,16 @@ class HistoryAdapter(
                 itemKeterangan.text = item.jenisTransaksi.namaJenis
             }
 
-            // 4. LOGIKA TAMPILAN JUMLAH & JENIS (YANG DIPERBAIKI)
+            // --- 4. LOGIKA TAMPILAN JUMLAH & JENIS (BERDASARKAN KODE JENIS) ---
             val namaJenis = item.jenisTransaksi.namaJenis
+            val kode = item.jenisTransaksi.kodeJenis // Mengambil SETOR, TARIK, atau AWAL
 
-            // Cek dulu apakah DITOLAK?
+// Cek dulu apakah DITOLAK?
             if (item.status == "rejected") {
-                // --- TAMPILAN KHUSUS REJECT ---
+                // --- TAMPILAN KHUSUS REJECT (Fungsi dipertahankan) ---
                 itemJenis.text = namaJenis.uppercase(Locale.ROOT) + " (BATAL)"
 
-                // Hapus tanda + atau -
+                // Tampilkan jumlah tanpa tanda + atau -
                 itemJumlah.text = jumlahFormatted
 
                 // Warna Abu-abu (Netral)
@@ -109,7 +110,8 @@ class HistoryAdapter(
             else {
                 // --- TAMPILAN NORMAL (Pending / Success) ---
 
-                if (namaJenis.equals("Setor Tunai", ignoreCase = true) || namaJenis.equals("Saldo Awal", ignoreCase = true)) {
+                // Menggunakan KODE JENIS agar lebih akurat
+                if (kode.equals("SETOR", ignoreCase = true)) {
                     // UANG MASUK (KREDIT)
                     itemJenis.text = "TRANSAKSI KREDIT"
                     itemJumlah.text = "+$jumlahFormatted"
@@ -117,8 +119,8 @@ class HistoryAdapter(
                     itemTipe.text = "CR"
                     itemTipe.setTextColor(ContextCompat.getColor(context, android.R.color.holo_green_dark))
                 }
-                else if (namaJenis.equals("Tarik Tunai", ignoreCase = true) || namaJenis.equals("Biaya Admin", ignoreCase = true)) {
-                    // UANG KELUAR (DEBIT)
+                else if (kode.equals("TARIK", ignoreCase = true) || kode.equals("AWAL", ignoreCase = true)) {
+                    // UANG KELUAR (DEBIT) -> Mencakup Tarik Tunai dan Biaya Admin Pendaftaran/Bulanan
                     itemJenis.text = "TRANSAKSI DEBIT"
                     itemJumlah.text = "-$jumlahFormatted"
                     itemJumlah.setTextColor(ContextCompat.getColor(context, android.R.color.holo_red_dark))
@@ -126,7 +128,7 @@ class HistoryAdapter(
                     itemTipe.setTextColor(ContextCompat.getColor(context, android.R.color.holo_red_dark))
                 }
                 else {
-                    // LAINNYA
+                    // LOGIKA CADANGAN (Jika ada kode lain di masa depan)
                     itemJenis.text = namaJenis.uppercase(Locale.ROOT)
                     itemJumlah.text = jumlahFormatted
                     itemJumlah.setTextColor(ContextCompat.getColor(context, R.color.text_secondary))
