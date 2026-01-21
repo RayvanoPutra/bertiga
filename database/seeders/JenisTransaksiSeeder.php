@@ -12,9 +12,19 @@ class JenisTransaksiSeeder extends Seeder
      * Run the database seeds.
      */
     public function run(): void
-    {
-        JenisTransaksi::create(['kode_jenis' => 'SETOR', 'nama_jenis' => 'Setor Tunai']);
-        JenisTransaksi::create(['kode_jenis' => 'TARIK', 'nama_jenis' => 'Tarik Tunai']);
-        JenisTransaksi::create(['kode_jenis' => 'AWAL', 'nama_jenis' => 'Saldo Awal']);
+{
+    $data = [
+        ['kode_jenis' => 'SETOR', 'nama_jenis' => 'Setor Tunai'],
+        ['kode_jenis' => 'TARIK', 'nama_jenis' => 'Tarik Tunai'],
+        ['kode_jenis' => 'AWAL', 'nama_jenis' => 'Saldo Awal'],
+        ['kode_jenis' => 'ADM', 'nama_jenis' => 'Biaya Administrasi'],
+    ];
+
+    foreach ($data as $val) {
+        \App\Models\JenisTransaksi::updateOrCreate(
+            ['kode_jenis' => $val['kode_jenis']], // Kunci pencarian
+            ['nama_jenis' => $val['nama_jenis']]  // Data yang diupdate/tambah
+        );
     }
+}
 }

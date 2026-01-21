@@ -178,6 +178,7 @@ class TransaksiController extends Controller
     }
 }
 
+
     // --- REJECT ---
     public function reject(Request $request, $kode_transaksi)
     {

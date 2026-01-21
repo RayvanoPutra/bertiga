@@ -45,6 +45,9 @@ Route::middleware('auth:sanctum')->group(function () {
     //statistik dashboard
     Route::get('/dashboard/stats', [NasabahController::class, 'getDashboardStats']);
 
+    
+    Route::get('transaksi/cetak-laporan', [App\Http\Controllers\Api\LaporanController::class, 'cetakLaporanAndroid']);
+
     // Data Profil
     Route::get('/user', function (Request $request) {
         $user = $request->user();
@@ -81,8 +84,6 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/history-admin', [TransaksiController::class, 'getHistoryAdmin']);
     });
 
-    Route::post('/laporan/request-otp', [LaporanController::class, 'requestOtp']);
-    Route::post('/laporan/verify', [LaporanController::class, 'verifyOtp']);
     Route::put('/nasabah/update', [NasabahController::class, 'updateProfile']);
 
 
@@ -124,7 +125,4 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 
     Route::get('/cetak-pdf', [TransaksiController::class, 'cetakPdf']);
-    // pdf
-    // Route::get('/transaksi/cetak-pdf', [TransaksiController::class, 'cetakPdf']);
-    // Route::get('/transaksi/cetak-struk/{kode}', [TransaksiController::class, 'cetakStruk']);
 });

@@ -4,82 +4,54 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Storage;
-use App\Mail\OtpMail;
 use App\Models\Transaksi;
-use Barryvdh\DomPDF\Facade\Pdf; // Library PDF
+use App\Models\Nasabah;
+use App\Models\Pengaturan;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class LaporanController extends Controller
 {
-    // 1. Minta OTP
-    public function requestOtp(Request $request)
+    public function cetakLaporanAndroid(Request $request) 
     {
-        $user = $request->user();
+        // 1. Ambil nasabah dari token
+        $nasabah = $request->user(); 
+        if (!$nasabah) return response()->json(['message' => 'Token tidak valid'], 401);
+        
+        $nasabah->load(['kelas.jurusan']);
 
-        // Generate 6 angka acak
-        $otp = rand(100000, 999999);
+        // 2. Ambil parameter bulan
+        $bulanMulai = $request->query('bulan_mulai');
+        $bulanSelesai = $request->query('bulan_selesai');
 
-        // Simpan di Cache selama 5 menit (300 detik)
-        // Key-nya unik per user: "otp_1001"
-        Cache::put('otp_' . $user->id, $otp, 300);
+        // 3. Ambil data transaksi (Pastikan variabel ini terdefinisi)
+        $transaksi = Transaksi::where('no_rekening', $nasabah->no_rekening)
+                    ->whereBetween('tgl_transaksi', [
+                        $this->getTglAndroid($bulanMulai, 'awal'), 
+                        $this->getTglAndroid($bulanSelesai, 'akhir')
+                    ])
+                    ->orderBy('tgl_transaksi', 'asc')
+                    ->get();
 
-        // Kirim Email
-        try {
-            Mail::to($user->email)->send(new OtpMail($otp, $user->nama));
-            return response()->json(['message' => 'Kode OTP telah dikirim ke ' . $user->email]);
-        } catch (\Exception $e) {
-            // Kita kirim pesan error ASLI dari sistem ke Android untuk debugging
-            return response()->json([
-                'message' => 'Gagal kirim email. Error: ' . $e->getMessage()
-            ], 500);
-        }
+        // 4. Bungkus data (Data ini khusus untuk file Blade baru)
+        $dataLaporan = [
+            'nama_sekolah' => 'BANK MINI SMK YADIKA 2',
+            'alamat'       => 'Jl. Raya Kamal No.Kav. 2, Kalideres, Jakarta Barat',
+            'nasabah'      => $nasabah,
+            'transaksi'    => $transaksi, // Variabel transaksi dikirim ke sini
+            'tgl_cetak'    => date('d F Y'),
+            'periode'      => $bulanMulai . ' - ' . $bulanSelesai
+        ];
+
+        // 5. Panggil file Blade BARU: laporan_android
+        $pdf = Pdf::loadView('pdf.laporan_android', $dataLaporan);
+        return $pdf->download('Laporan_BankMini_' . $nasabah->nama . '.pdf');
     }
 
-    // 2. Verifikasi & Download PDF
-    public function verifyOtp(Request $request)
-    {
-        $request->validate(['otp' => 'required|numeric']);
-        
-        $user = $request->user();
-        $cachedOtp = Cache::get('otp_' . $user->id);
-
-        // Cek OTP
-        if (!$cachedOtp || $cachedOtp != $request->otp) {
-            return response()->json(['message' => 'Kode OTP salah atau kadaluarsa.'], 401);
-        }
-
-        // --- OTP BENAR! GENERATE PDF ---
-        
-        // Hapus OTP agar tidak bisa dipakai lagi
-        Cache::forget('otp_' . $user->id);
-
-        // Ambil Data Riwayat
-        $transaksi = Transaksi::with('jenisTransaksi')
-            ->where('no_rekening', $user->no_rekening)
-            ->where('status', '!=', 'pending')
-            ->orderBy('tgl_transaksi', 'desc')
-            ->get();
-
-        // Load View PDF (Kita buat view ini nanti)
-        $pdf = Pdf::loadView('pdf.laporan_keuangan', [
-            'nasabah' => $user,
-            'transaksi' => $transaksi
-        ]);
-
-        // Simpan PDF ke Folder Public Storage
-        $fileName = 'Laporan_' . $user->no_rekening . '_' . time() . '.pdf';
-        $path = 'public/laporan/' . $fileName;
-        Storage::put($path, $pdf->output());
-
-        // Buat URL agar Android bisa download
-        // URL: http://ip-server/storage/laporan/namafile.pdf
-        $url = asset('storage/laporan/' . $fileName);
-
-        return response()->json([
-            'message' => 'Verifikasi Berhasil',
-            'url' => $url
-        ]);
+    private function getTglAndroid($bulan, $tipe) {
+        $bulanAngka = ['Januari'=>'01','Februari'=>'02','Maret'=>'03','April'=>'04','Mei'=>'05','Juni'=>'06','Juli'=>'07','Agustus'=>'08','September'=>'09','Oktober'=>'10','November'=>'11','Desember'=>'12'];
+        $angka = $bulanAngka[$bulan] ?? date('m');
+        if($tipe == 'awal') return date('Y') . '-' . $angka . '-01 00:00:00';
+        $tglAkhir = date('t', strtotime(date('Y') . '-' . $angka . '-01'));
+        return date('Y') . '-' . $angka . '-' . $tglAkhir . ' 23:59:59';
     }
 }

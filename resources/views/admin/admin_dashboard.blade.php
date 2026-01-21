@@ -132,13 +132,22 @@
                 const isSetor = trx.jenis_transaksi.nama_jenis.toLowerCase().includes('setor');
                 const nama = trx.nasabah ? trx.nasabah.nama : (trx.nama_saat_transaksi || 'Nasabah');
                 
+                // Ambil catatan nasabah, jika kosong tampilkan "-"
+                const catatan = trx.keterangan_nasabah ? trx.keterangan_nasabah : '-';
+                
                 list.insertAdjacentHTML('beforeend', `
                     <div class="bg-gray-50 p-3 rounded-lg border border-gray-200 shadow-sm transition hover:bg-white hover:border-blue-300">
                         <div class="flex justify-between items-start mb-1">
                             <p class="text-xs font-black text-gray-800 uppercase">${nama}</p>
                             <span class="text-[8px] ${isSetor ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'} px-1.5 py-0.5 rounded font-black tracking-tighter">PENDING</span>
                         </div>
-                        <p class="text-[10px] text-gray-500 mb-2 font-mono">${trx.jenis_transaksi.nama_jenis} - <b class="text-blue-600">${formatRupiah(trx.jumlah)}</b></p>
+                        <p class="text-[10px] text-gray-500 mb-1 font-mono">${trx.jenis_transaksi.nama_jenis} - <b class="text-blue-600">${formatRupiah(trx.jumlah)}</b></p>
+                        
+                        <div class="mb-3 p-2 bg-white border-l-2 border-orange-400 rounded-r shadow-inner">
+                            <p class="text-[9px] text-gray-400 uppercase font-bold tracking-widest mb-0.5">Keperluan:</p>
+                            <p class="text-[10px] text-gray-700 italic leading-tight italic">"${catatan}"</p>
+                        </div>
+
                         <div class="flex gap-2">
                             <button onclick="processTransaction('${trx.kode_transaksi}', 'approve')" class="flex-1 bg-blue-600 text-white text-[9px] font-bold py-1.5 rounded shadow-sm">SETUJU</button>
                             <button onclick="processTransaction('${trx.kode_transaksi}', 'reject')" class="flex-1 bg-gray-100 text-gray-500 text-[9px] font-bold py-1.5 rounded">TOLAK</button>
