@@ -203,6 +203,7 @@ document.getElementById('formTA').addEventListener('submit', async (e) => {
                 errorMsg.innerText = result.errors.tahun_ajaran[0];
             }
         } else if (response.ok) {
+            alert("✅ Berhasil!\nTahun Ajaran ditambahkan dengan Kode: " + result.data.kode_tahun_ajaran);
             closeModalTA(); 
             fetchTA(); // Refresh tabel setelah berhasil
         } else {

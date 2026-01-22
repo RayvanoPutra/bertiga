@@ -3,13 +3,13 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Laravel\Sanctum\HasApiTokens;
+use PHPOpenSourceSaver\JWTAuth\Contracts\JWTSubject;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 
-class Petugas extends Authenticatable
+class Petugas extends Authenticatable implements JWTSubject
 {
-    use HasApiTokens, HasFactory;
+    use HasFactory;
     protected $table = 'petugas';
     protected $primaryKey = 'kode_petugas';
     public $incrementing = false;
@@ -20,4 +20,13 @@ class Petugas extends Authenticatable
         'password',
         'remember_token',
     ];
+    public function getJWTIdentifier()
+    {
+        return $this->getKey();
+    }
+
+    public function getJWTCustomClaims()
+    {
+        return [];
+    }
 }

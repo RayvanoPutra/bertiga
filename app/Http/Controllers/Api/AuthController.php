@@ -9,13 +9,14 @@ use App\Models\Petugas;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Auth;
 
 
 class AuthController extends Controller
 {
     public function loginPetugas(Request $request)
     {
-        //validasi input
+        // 1. Validasi Input
         $validator = Validator::make($request->all(), [
             'username' => 'required',
             'password' => 'required',
@@ -24,77 +25,79 @@ class AuthController extends Controller
         if ($validator->fails()) {
             return response()->json($validator->errors(), 422);
         }
-        //find by username
-        $petugas = Petugas::where('username', $request->username)->first();
 
-        // validasi petugas ada atau tidak dan cek password
-        if (! $petugas || ! Hash::check($request->password, $petugas->password)) {
+        // 2. Ambil Credentials (Username & Password)
+        $credentials = $request->only('username', 'password');
+
+        // 3. Cek ke Guard 'petugas'
+        // attempt() otomatis hash check password & generate token
+        if (! $token = Auth::guard('petugas')->attempt($credentials)) {
             return response()->json([
-                'message' => 'Username dan Password salah.'
+                'success' => false,
+                'message' => 'Username atau Password salah.',
             ], 401);
         }
 
-        //klo berhasil dapat kartu akses/token dgn nama 'token-petugas'
-        $token = $petugas->createToken('token-petugas')->plainTextToken;
-
-        //kirim respon json kl berhasil
-        return response()->json([
-            'message' => 'Login berhasil',
-            'access_token' => $token,
-            'role' => $petugas->role,
-            'user' => $petugas
-        ]);
+        // 4. Jika sukses, kembalikan Token & Data User
+        return $this->respondWithToken($token, 'petugas');
     }
 
     public function loginNasabah(Request $request)
     {
-        // --- PERUBAHAN DI SINI ---
-        // Validasi input: sekarang pakai 'no_rekening' bukan 'username'
+        // 1. Validasi Input
         $validator = Validator::make($request->all(), [
-            'no_rekening' => 'required|string', 
-            'password' => 'required|string',
+            'no_rekening' => 'required', // Nasabah login pakai No Rekening
+            'password'    => 'required',
         ]);
 
         if ($validator->fails()) {
             return response()->json($validator->errors(), 422);
         }
 
-        // Cari nasabah berdasarkan no_rekening
-        $nasabah = Nasabah::where('no_rekening', $request->no_rekening)->first();
+        // 2. Ambil Credentials
+        $credentials = $request->only('no_rekening', 'password');
 
-        // Cek nasabah ada atau tidak dan cek password
-        if (! $nasabah || ! Hash::check($request->password, $nasabah->password)) {
+        // 3. Cek ke Guard 'nasabah'
+        if (! $token = Auth::guard('nasabah')->attempt($credentials)) {
             return response()->json([
-                'message' => 'Nomor Rekening atau Password salah.'
+                'success' => false,
+                'message' => 'No Rekening atau Password salah.',
             ], 401);
         }
 
-        // Cek status nasabah
-        // Pastikan kolom 'status' ada di database, jika belum migrasi, baris ini bisa dikomentari sementara
-        if ($nasabah->status != 'aktif') {
-            throw ValidationException::withMessages([
-                'no_rekening' => ['Akun ini sudah tidak aktif (status: ' . $nasabah->status . ').'],
-            ]);
-        }
-
-        // Generate token
-        $token = $nasabah->createToken('token-nasabah')->plainTextToken;
-
-        // Kirim respon json
-        // Pastikan nama key sesuai dengan yang diminta Android ('token' dan 'data')
-        return response()->json([
-            'message' => 'Login Berhasil',
-            'token' => $token, 
-            'data' => $nasabah
-        ]);
+        // 4. Jika sukses, kembalikan Token
+        return $this->respondWithToken($token, 'nasabah');
     }
 
-    public function logout(Request $request)
+    public function logout()
     {
-        // Menghapus token akses saat ini
-        $request->user()->currentAccessToken()->delete();
+        // Invalidate token yang sedang dipakai
+        auth()->logout();
 
-        // Respon json
-        return response()->json(['message' => 'Logout Berhasil']);
+        return response()->json(['message' => 'Berhasil logout']);
+    }
+
+    // Cek Profil Petugas
+    public function mePetugas()
+    {
+        return response()->json(Auth::guard('petugas')->user());
+    }
+
+    public function meNasabah()
+    {
+        return response()->json(Auth::guard('nasabah')->user());
+    }
+    protected function respondWithToken($token, $guard)
+    {
+        // Ambil data user yang sedang login berdasarkan guard
+        $user = Auth::guard($guard)->user();
+
+        return response()->json([
+            'success' => true,
+            'user'    => $user, // Mengirim data user (nama, role, dll) ke frontend
+            'access_token' => $token,
+            'token_type'   => 'bearer',
+            'expires_in'   => Auth::guard($guard)->factory()->getTTL() * 60
+        ]);
     }
 }

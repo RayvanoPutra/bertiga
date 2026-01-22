@@ -319,6 +319,7 @@ function closeModalKelas() {
 
             const result = await res.json();
             if (res.ok) {
+                alert("✅ Berhasil!\nKelas ditambahkan dengan Kode: " + result.data.kode_kelas);
                 closeModalKelas();
                 fetchKelas();
             } else {

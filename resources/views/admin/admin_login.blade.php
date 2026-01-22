@@ -77,7 +77,7 @@
 
         try {
             // Kita gunakan rute login langsung agar lebih cepat
-            const targetUrl = `${urlInput}/login/petugas`;
+            const targetUrl = `${urlInput}/auth/petugas/login`;
             
             const response = await fetch(targetUrl, {
                 method: 'POST',
@@ -91,9 +91,11 @@
             const data = await response.json();
 
             if (response.ok) {
+                console.log("Respon Server:", data);
                 // MENYIMPAN SEMUA DATA YANG DIBUTUHKAN
                 localStorage.setItem('petugas_token', data.access_token);
-                localStorage.setItem('role', data.role); 
+                const userRole = data.user.role;
+                localStorage.setItem('role', userRole); 
                 localStorage.setItem('nama_petugas', data.user.nama_petugas);
 
                 window.location.href = DASHBOARD_URL; 

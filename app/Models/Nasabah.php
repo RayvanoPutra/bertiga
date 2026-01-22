@@ -4,12 +4,12 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
-use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use PHPOpenSourceSaver\JWTAuth\Contracts\JWTSubject;
 
-class Nasabah extends Authenticatable
+class Nasabah extends Authenticatable implements JWTSubject
 {
-    use HasFactory, HasApiTokens;
+    use HasFactory;
 
     protected $table = 'nasabah';
     protected $primaryKey = 'no_rekening'; //primarykey
@@ -31,5 +31,14 @@ class Nasabah extends Authenticatable
         // Parameter 2: Nama kolom di tabel NASABAH
         // Parameter 3: Nama kolom di tabel TAHUN_AJARAN
         return $this->belongsTo(TahunAjaran::class, 'kode_tahun_ajaran', 'kode_tahun_ajaran');
+    }
+    public function getJWTIdentifier()
+    {
+        return $this->getKey();
+    }
+
+    public function getJWTCustomClaims()
+    {
+        return [];
     }
 }
