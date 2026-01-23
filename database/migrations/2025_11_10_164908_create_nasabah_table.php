@@ -12,6 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('nasabah', function (Blueprint $table) {
+<<<<<<< HEAD
             // Kolom utama
             $table->string('no_rekening', 20)->primary();
 
@@ -37,6 +38,21 @@ return new class extends Migration
             // 2025_12_12_004324_add_status_to_nasabah_table.php
             // ------------------------------------
 
+=======
+            $table->string('no_rekening')->primary();
+            $table->foreignId('kelas_id')->nullable()->constrained('kelas');
+            $table->string('no_induk')->unique();
+            $table->string('nama');
+            $table->string('email')->nullable();
+            $table->string('no_telp')->nullable();
+            $table->text('alamat')->nullable();
+            $table->enum('jenis_rekening', ['siswa', 'guru']);
+            $table->bigInteger('saldo')->default(0);
+
+            // Info Login Nasabah (untuk Android)
+            $table->string('username')->unique();
+            $table->string('password');
+>>>>>>> e5f3843eb7a0b900deedde262c235ad8fe8f0740
             $table->timestamps();
         });
     }
@@ -48,4 +64,8 @@ return new class extends Migration
     {
         Schema::dropIfExists('nasabah');
     }
+<<<<<<< HEAD
 };
+=======
+};
+>>>>>>> e5f3843eb7a0b900deedde262c235ad8fe8f0740

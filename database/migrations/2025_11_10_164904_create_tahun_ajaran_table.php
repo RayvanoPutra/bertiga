@@ -11,15 +11,10 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('jenis_transaksi', function (Blueprint $table) {
-<<<<<<< HEAD
-            // Format Primary Key: SETOR 
-            $table->string('kode_jenis', 10)->primary();
-            $table->string('nama_jenis', 50);
-=======
+        Schema::create('tahun_ajaran', function (Blueprint $table) {
             $table->id();
-            $table->string('nama_jenis')->unique();
->>>>>>> e5f3843eb7a0b900deedde262c235ad8fe8f0740
+            $table->string('tahun_ajaran')->unique();
+            $table->enum('status', ['aktif', 'nonaktif'])->default('nonaktif');
             $table->timestamps();
         });
     }
@@ -29,6 +24,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('jenis_transaksi');
+        Schema::dropIfExists('tahun_ajaran');
     }
 };

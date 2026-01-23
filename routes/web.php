@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 
+<<<<<<< HEAD
 // Redirect root ke login
 Route::get('/', function () {
     return redirect('/admin/login');
@@ -57,3 +58,8 @@ Route::get('/admin/akun', function () {
     return view('admin.admin_akun'); 
 });
 
+=======
+Route::get('/', function () {
+    return view('welcome');
+});
+>>>>>>> e5f3843eb7a0b900deedde262c235ad8fe8f0740

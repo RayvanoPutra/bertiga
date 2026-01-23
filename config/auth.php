@@ -42,16 +42,26 @@ return [
         ],
 
         'petugas' => [
+<<<<<<< HEAD
             'driver' => 'jwt',
+=======
+            'driver' => 'sanctum',
+>>>>>>> e5f3843eb7a0b900deedde262c235ad8fe8f0740
             'provider' => 'petugas',
         ],
 
         'nasabah' => [
+<<<<<<< HEAD
             'driver' => 'jwt',
             'provider' => 'nasabah',
         ],
 
         'superadmin' => [ 'driver' => 'jwt', 'provider' => 'superadmin', ],
+=======
+            'driver' => 'sanctum',
+            'provider' => 'nasabah',
+        ],
+>>>>>>> e5f3843eb7a0b900deedde262c235ad8fe8f0740
     ],
 
     /*
@@ -87,10 +97,13 @@ return [
             'model' => App\Models\Nasabah::class,
         ],
 
+<<<<<<< HEAD
 
 
         
 
+=======
+>>>>>>> e5f3843eb7a0b900deedde262c235ad8fe8f0740
         // 'users' => [
         //     'driver' => 'database',
         //     'table' => 'users',

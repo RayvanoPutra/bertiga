@@ -12,12 +12,17 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('jurusan', function (Blueprint $table) {
+<<<<<<< HEAD
             // Hanya kode dan nama sesuai permintaan Anda
             $table->string('kode_jurusan', 20)->primary();
             $table->string('nama_jurusan', 100);
             
             // HAPUS bagian kode_tahun_ajaran dan Foreign Key-nya di sini
             
+=======
+            $table->string('kode_jurusan')->primary();
+            $table->string('nama_jurusan');
+>>>>>>> e5f3843eb7a0b900deedde262c235ad8fe8f0740
             $table->timestamps();
         });
     }
@@ -29,4 +34,8 @@ return new class extends Migration
     {
         Schema::dropIfExists('jurusan');
     }
+<<<<<<< HEAD
 };
+=======
+};
+>>>>>>> e5f3843eb7a0b900deedde262c235ad8fe8f0740

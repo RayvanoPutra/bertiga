@@ -2,6 +2,11 @@
 
 namespace Database\Seeders;
 
+<<<<<<< HEAD
+=======
+use App\Models\User;
+// use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+>>>>>>> e5f3843eb7a0b900deedde262c235ad8fe8f0740
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
@@ -11,6 +16,7 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
+<<<<<<< HEAD
         $this->call([
             // Data Master (Induk)
             TahunAjaranSeeder::class,
@@ -28,3 +34,20 @@ class DatabaseSeeder extends Seeder
         ]);
     }
 }
+=======
+        // User::factory(10)->create();
+
+        $this->call([
+            JurusanSeeder::class,
+            TahunAjaranSeeder::class,
+            JenisTransaksiSeeder::class,
+            PetugasSeeder::class,
+        ]);
+
+        // User::factory()->create([
+        //     'name' => 'Test User',
+        //     'email' => 'test@example.com',
+        // ]);
+    }
+}
+>>>>>>> e5f3843eb7a0b900deedde262c235ad8fe8f0740
