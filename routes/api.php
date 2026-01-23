@@ -101,7 +101,7 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::post('/petugas', [MasterDataController::class, 'storePetugas']);
             Route::delete('/petugas/{kode_petugas}', [MasterDataController::class, 'deletePetugas']);
 
-            // Create, Update, Delete Jurusan
+            // Create, Update, Delete Jurusan   
             Route::post('/jurusan', [MasterDataController::class, 'storeJurusan']);
             Route::put('/jurusan/{kode_jurusan}', [MasterDataController::class, 'updateJurusan']);
             Route::delete('/jurusan/{kode_jurusan}', [MasterDataController::class, 'deleteJurusan']);

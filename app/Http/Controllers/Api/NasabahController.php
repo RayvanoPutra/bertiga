@@ -195,9 +195,13 @@ class NasabahController extends Controller
             ]);
 
             // C. Catat Transaksi 2: Potongan Admin
+            // if ($biayaAdmin > 0) {
+            //     $jenisAdmin = JenisTransaksi::where('nama_jenis', 'Biaya Admin')->first();
+            //     $kodeJenisAdmin = $jenisAdmin ? $jenisAdmin->kode_jenis : 'AWAL';
+
             if ($biayaAdmin > 0) {
                 $jenisAdmin = JenisTransaksi::where('nama_jenis', 'Biaya Admin')->first();
-                $kodeJenisAdmin = $jenisAdmin ? $jenisAdmin->kode_jenis : 'AWAL';
+                $kodeJenisAdmin = $jenisAdmin ? $jenisAdmin->kode_jenis : 'ADM';
 
                 Transaksi::create([
                     'kode_transaksi' => 'ADM-' . (time() + 1) . '-' . rand(100, 999),
@@ -342,26 +346,49 @@ class NasabahController extends Controller
     //Statistik Dashboard
     // app/Http/Controllers/Api/NasabahController.php
 
+    // public function getDashboardStats()
+    // {
+    //     try {
+    //         $totalSaldo = \App\Models\Nasabah::sum('saldo'); // Total uang nasabah
+    //         $totalNasabah = \App\Models\Nasabah::count(); // Jumlah nasabah terdaftar
+
+    //         // Menghitung setoran masuk hari ini (opsional jika tabel transaksi sudah ada)
+    //         $setoranHariIni = \App\Models\Transaksi::where('jenis_transaksi', 'setor')
+    //             ->whereDate('created_at', today())
+    //             ->sum('nominal');
+
+    //         return response()->json([
+    //             'total_saldo' => $totalSaldo,
+    //             'total_nasabah' => $totalNasabah,
+    //             'setoran_hari_ini' => $setoranHariIni,
+    //         ]);
+    //     } catch (\Exception $e) {
+    //         return response()->json(['message' => 'Gagal memuat statistik'], 500);
+    //     }
+    // }
+
     public function getDashboardStats()
-    {
-        try {
-            $totalSaldo = \App\Models\Nasabah::sum('saldo'); // Total uang nasabah
-            $totalNasabah = \App\Models\Nasabah::count(); // Jumlah nasabah terdaftar
+{
+    try {
+        $totalSaldo = \App\Models\Nasabah::sum('saldo');
+        $totalNasabah = \App\Models\Nasabah::count();
 
-            // Menghitung setoran masuk hari ini (opsional jika tabel transaksi sudah ada)
-            $setoranHariIni = \App\Models\Transaksi::where('jenis_transaksi', 'setor')
-                ->whereDate('created_at', today())
-                ->sum('nominal');
+        // SALAH: sum('nominal') -> BENAR: sum('jumlah')
+        // SALAH: where('jenis_transaksi', 'setor') -> BENAR: where('kode_jenis', 'SETOR')
+        $setoranHariIni = \App\Models\Transaksi::where('kode_jenis', 'SETOR')
+            ->where('status', 'success') // Pastikan hanya yang sukses
+            ->whereDate('tgl_transaksi', today())
+            ->sum('jumlah');
 
-            return response()->json([
-                'total_saldo' => $totalSaldo,
-                'total_nasabah' => $totalNasabah,
-                'setoran_hari_ini' => $setoranHariIni,
-            ]);
-        } catch (\Exception $e) {
-            return response()->json(['message' => 'Gagal memuat statistik'], 500);
-        }
+        return response()->json([
+            'total_saldo' => $totalSaldo,
+            'total_nasabah' => $totalNasabah,
+            'setoran_hari_ini' => $setoranHariIni,
+        ]);
+    } catch (\Exception $e) {
+        return response()->json(['message' => 'Gagal memuat statistik: ' . $e->getMessage()], 500);
     }
+}
 
     public function cetakLaporan(Request $request)
     {
