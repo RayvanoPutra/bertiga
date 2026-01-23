@@ -16,44 +16,44 @@
     </div>
 
     <div class="bg-white p-5 rounded-xl shadow-sm mb-6 border border-gray-100">
-    <form id="filterForm" class="grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
-        <div class="md:col-span-2">
-            <label class="block text-xs font-bold text-gray-500 mb-1 uppercase tracking-wider">Cari Kelas</label>
-            <div class="relative">
-                <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400">
-                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                    </svg>
-                </span>
-                <input type="text" id="filterSearch" onkeyup="fetchKelas()" placeholder="Ketik nama kelas..." 
-                    class="w-full pl-9 p-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition">
+        <form id="filterForm" class="grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
+            <div class="md:col-span-2">
+                <label class="block text-xs font-bold text-gray-500 mb-1 uppercase tracking-wider">Cari Kelas</label>
+                <div class="relative">
+                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400">
+                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                    </span>
+                    <input type="text" id="filterSearch" onkeyup="fetchKelas()" placeholder="Ketik nama kelas..." 
+                        class="w-full pl-9 p-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition">
+                </div>
             </div>
-        </div>
-        
-        <div>
-            <label class="block text-xs font-bold text-gray-500 mb-1 uppercase tracking-wider">Jurusan</label>
-            <select id="filter_jurusan" onchange="fetchKelas()" 
-                class="w-full p-2 border border-gray-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-indigo-500 outline-none transition">
-                <option value="">Semua Jurusan</option>
-            </select>
-        </div>
+            
+            <div>
+                <label class="block text-xs font-bold text-gray-500 mb-1 uppercase tracking-wider">Jurusan</label>
+                <select id="filter_jurusan" onchange="fetchKelas()" 
+                    class="w-full p-2 border border-gray-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-indigo-500 outline-none transition">
+                    <option value="">Semua Jurusan</option>
+                </select>
+            </div>
 
-        <div>
-            <label class="block text-xs font-bold text-gray-500 mb-1 uppercase tracking-wider">Tahun Ajaran</label>
-            <select id="filter_ta" onchange="fetchKelas()" 
-                class="w-full p-2 border border-gray-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-indigo-500 outline-none transition">
-                <option value="">Semua TA</option>
-            </select>
-        </div>
+            <div>
+                <label class="block text-xs font-bold text-gray-500 mb-1 uppercase tracking-wider">Tahun Ajaran</label>
+                <select id="filter_ta" onchange="fetchKelas()" 
+                    class="w-full p-2 border border-gray-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-indigo-500 outline-none transition">
+                    <option value="">Semua TA</option>
+                </select>
+            </div>
 
-        <div class="flex">
-            <button type="button" onclick="resetFilter()" 
-                class="w-full bg-gray-100 text-gray-600 font-bold py-2 rounded-lg hover:bg-gray-200 transition text-sm border border-gray-200 flex items-center justify-center gap-2">
-                <span class="text-lg">🔄</span> Reset Filter
-            </button>
-        </div>
-    </form>
-</div>
+            <div class="flex">
+                <button type="button" onclick="resetFilter()" 
+                    class="w-full bg-gray-100 text-gray-600 font-bold py-2 rounded-lg hover:bg-gray-200 transition text-sm border border-gray-200 flex items-center justify-center gap-2">
+                    <span class="text-lg">🔄</span> Reset Filter
+                </button>
+            </div>
+        </form>
+    </div>
 
     <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
         <table class="w-full text-left border-collapse">
@@ -135,14 +135,15 @@
 @endsection
 
 @push('scripts')
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
 <script>
     const authToken = localStorage.getItem('petugas_token');
     const BASE_URL = "/api";
 
-    // 1. Inisialisasi Data
+    // Inisialisasi awal
     document.addEventListener('DOMContentLoaded', () => {
         if (!authToken) {
-            alert("Sesi berakhir, silakan login kembali.");
             window.location.href = "/login";
             return;
         }
@@ -150,13 +151,10 @@
         fetchKelas();
     });
 
-    // 2. Ambil data untuk Dropdown (Filter & Form)
+    // Mengambil data Jurusan & TA untuk select option
     async function fetchDropdownData() {
         try {
-            const headers = { 
-                'Authorization': `Bearer ${authToken}`, 
-                'Accept': 'application/json' 
-            };
+            const headers = { 'Authorization': `Bearer ${authToken}`, 'Accept': 'application/json' };
             const [resJurusan, resTA] = await Promise.all([
                 fetch(`${BASE_URL}/master/jurusan`, { headers }),
                 fetch(`${BASE_URL}/master/tahun-ajaran`, { headers })
@@ -170,11 +168,6 @@
             const sTA = document.getElementById('select_ta');
             const fTA = document.getElementById('filter_ta');
 
-            sJurusan.innerHTML = '<option value="">Pilih Jurusan</option>';
-            fJurusan.innerHTML = '<option value="">Semua Jurusan</option>';
-            sTA.innerHTML = '<option value="">Pilih TA</option>';
-            fTA.innerHTML = '<option value="">Semua Tahun Ajaran</option>';
-
             jurusans.forEach(j => {
                 const opt = `<option value="${j.kode_jurusan}">${j.nama_jurusan}</option>`;
                 sJurusan.insertAdjacentHTML('beforeend', opt);
@@ -186,42 +179,39 @@
                 sTA.insertAdjacentHTML('beforeend', opt);
                 fTA.insertAdjacentHTML('beforeend', opt);
             });
-        } catch (e) {
-            console.error("Gagal memuat dropdown:", e);
-        }
+        } catch (e) { console.error("Dropdown error:", e); }
     }
 
-    // 3. Ambil dan Tampilkan Data Tabel
+    // Ambil Data Kelas
     async function fetchKelas() {
         const tbody = document.getElementById('tbodyKelas');
         const fJurusan = document.getElementById('filter_jurusan').value;
         const fTA = document.getElementById('filter_ta').value;
+        const fSearch = document.getElementById('filterSearch').value.toLowerCase();
 
-        tbody.innerHTML = '<tr><td colspan="5" class="text-center py-10 text-gray-400">Memuat data...</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="6" class="text-center py-10 text-gray-400 italic">Memuat data...</td></tr>';
 
         try {
             const response = await fetch(`${BASE_URL}/master/kelas`, {
-                headers: { 
-                    'Authorization': `Bearer ${authToken}`, 
-                    'Accept': 'application/json' 
-                }
+                headers: { 'Authorization': `Bearer ${authToken}`, 'Accept': 'application/json' }
             });
 
             if (response.status === 401) {
-            localStorage.removeItem('petugas_token');
-            window.location.href = "/admin/login";
-            return;
-        }
+                localStorage.removeItem('petugas_token');
+                window.location.href = "/admin/login";
+                return;
+            }
 
             let data = await response.json();
 
-            // Filter data di sisi Frontend
+            // Filter logic
             if (fJurusan) data = data.filter(i => i.kode_jurusan === fJurusan);
             if (fTA) data = data.filter(i => i.kode_tahun_ajaran === fTA);
+            if (fSearch) data = data.filter(i => i.nama_kelas.toLowerCase().includes(fSearch));
 
             tbody.innerHTML = '';
             if (data.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="5" class="text-center py-10 text-gray-400">Tidak ada data kelas.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center py-10 text-gray-400 italic">Data tidak ditemukan.</td></tr>';
                 return;
             }
 
@@ -237,64 +227,60 @@
                                 ${item.tahun_ajaran?.tahun_ajaran || '-'}
                             </span>
                         </td>
-                        <td class="px-6 py-4 text-center">
+                        <td class="px-6 py-4">
                             <div class="flex justify-center gap-2">
-                                <button onclick="editKelas('${item.kode_kelas}', '${item.nama_kelas}', '${item.kode_jurusan}', '${item.kode_tahun_ajaran}')" class="p-1.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 active:scale-90 transition-all">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" /></svg>
+                                <button onclick="editKelas('${item.kode_kelas}', '${item.nama_kelas}', '${item.kode_jurusan}', '${item.kode_tahun_ajaran}')" 
+                                    class="p-1.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 active:scale-90 transition-all shadow-sm">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                        <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+                                    </svg>
                                 </button>
-                                <button onclick="deleteKelas('${item.kode_kelas}')" class="p-1.5 bg-rose-500 text-white rounded-lg hover:bg-rose-600 active:scale-90 transition-all">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" /></svg>
+                                <button onclick="deleteKelas('${item.kode_kelas}')" 
+                                    class="p-1.5 bg-rose-500 text-white rounded-lg hover:bg-rose-600 active:scale-90 transition-all shadow-sm">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
+                                    </svg>
                                 </button>
                             </div>
                         </td>
-                    </tr>
-                `;
+                    </tr>`;
                 tbody.insertAdjacentHTML('beforeend', row);
             });
-        } catch (e) {
-            console.error("Detail Error:", e);
-            alert("Gagal memuat data: " + e.message);
-        }
+        } catch (e) { console.error("Fetch error:", e); }
     }
 
-    // --- MODAL & CRUD ---
+    // Modal Control
     function openModalKelas() {
-    const modal = document.getElementById('modalKelas');
-    const container = document.getElementById('modalContainer');
-    
-    modal.classList.remove('hidden');
-    // Beri sedikit delay agar transisi CSS terbaca
-    setTimeout(() => {
-        modal.classList.remove('opacity-0');
-        container.classList.remove('scale-95', 'opacity-0');
-        container.classList.add('scale-100', 'opacity-100');
-    }, 10);
+        const modal = document.getElementById('modalKelas');
+        const container = document.getElementById('modalContainer');
+        modal.classList.remove('hidden');
+        setTimeout(() => {
+            container.classList.remove('scale-95', 'opacity-0');
+            container.classList.add('scale-100', 'opacity-100');
+        }, 10);
+        document.getElementById('formKelas').reset();
+        document.getElementById('errorKelas').classList.add('hidden');
+        document.getElementById('kelas_kode_lama').value = '';
+        document.getElementById('modalTitle').innerText = "Tambah Kelas Baru";
+    }
 
-    document.getElementById('formKelas').reset();
-    document.getElementById('errorKelas').classList.add('hidden');
-    document.getElementById('kelas_kode_lama').value = '';
-    document.getElementById('modalTitle').innerText = "Tambah Kelas Baru";
-}
+    function closeModalKelas() {
+        const modal = document.getElementById('modalKelas');
+        const container = document.getElementById('modalContainer');
+        container.classList.remove('scale-100', 'opacity-100');
+        container.classList.add('scale-95', 'opacity-0');
+        setTimeout(() => { modal.classList.add('hidden'); }, 300);
+    }
 
-function closeModalKelas() {
-    const modal = document.getElementById('modalKelas');
-    const container = document.getElementById('modalContainer');
-
-    container.classList.remove('scale-100', 'opacity-100');
-    container.classList.add('scale-95', 'opacity-0');
-    
-    setTimeout(() => {
-        modal.classList.add('hidden');
-    }, 300);
-}
-
+    // SIMPAN DATA (POST/PUT)
     document.getElementById('formKelas').addEventListener('submit', async (e) => {
         e.preventDefault();
         const btn = document.getElementById('btnSimpanKelas');
         const kodeLama = document.getElementById('kelas_kode_lama').value;
         const errorMsg = document.getElementById('errorKelas');
+        const errorText = document.getElementById('errorText');
         
-        btn.disabled = true; btn.innerText = "Menyimpan...";
+        btn.disabled = true; btn.innerText = "Memproses...";
         errorMsg.classList.add('hidden');
 
         const payload = {
@@ -319,16 +305,24 @@ function closeModalKelas() {
 
             const result = await res.json();
             if (res.ok) {
+                // POPUP BERHASIL
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Berhasil!',
+                    text: kodeLama ? 'Data kelas diperbarui' : 'Kelas baru telah ditambahkan',
+                    timer: 1500,
+                    showConfirmButton: false
+                });
                 closeModalKelas();
                 fetchKelas();
             } else {
-                errorMsg.innerText = result.message || "Gagal menyimpan data";
+                errorText.innerText = result.message || "Gagal menyimpan data";
                 errorMsg.classList.remove('hidden');
             }
         } catch (e) {
-            alert("Koneksi gagal");
+            Swal.fire('Error!', 'Koneksi ke server terputus', 'error');
         } finally {
-            btn.disabled = false; btn.innerText = "Simpan";
+            btn.disabled = false; btn.innerText = "Simpan Kelas";
         }
     });
 
@@ -341,32 +335,45 @@ function closeModalKelas() {
         document.getElementById('select_ta').value = ta;
     }
 
+    // HAPUS DATA (DELETE)
     async function deleteKelas(kode) {
-    if (!confirm(`Hapus kelas ${kode}? Peringatan: Data tidak bisa dihapus jika sudah ada nasabah di dalamnya.`)) return;
-    try {
-        const res = await fetch(`${BASE_URL}/master/kelas/${kode}`, {
-            method: 'DELETE',
-            headers: { 
-                'Authorization': `Bearer ${authToken}`,
-                'Accept': 'application/json' 
-            }
+        // KONFIRMASI HAPUS MODERN
+        const confirmResult = await Swal.fire({
+            title: 'Hapus kelas?',
+            text: "Data yang dihapus tidak bisa dikembalikan!",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#4f46e5', // Indigo-600
+            cancelButtonColor: '#f43f5e',  // Rose-500
+            confirmButtonText: 'Ya, Hapus!',
+            cancelButtonText: 'Batal'
         });
-        
-        const result = await res.json(); // Ambil pesan error dari server
 
-        if (res.ok) {
-            fetchKelas();
-        } else {
-            // Tampilkan pesan error spesifik (misal: "Integrity constraint violation")
-            alert("Gagal menghapus: " + (result.message || "Data sedang digunakan."));
+        if (!confirmResult.isConfirmed) return;
+
+        try {
+            const res = await fetch(`${BASE_URL}/master/kelas/${kode}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${authToken}`, 'Accept': 'application/json' }
+            });
+            
+            const result = await res.json();
+
+            if (res.ok) {
+                Swal.fire('Terhapus!', 'Kelas berhasil dihapus.', 'success');
+                fetchKelas();
+            } else {
+                Swal.fire('Gagal!', result.message || "Data sedang digunakan.", 'error');
+            }
+        } catch (e) {
+            Swal.fire('Error!', 'Terjadi kesalahan jaringan.', 'error');
         }
-    } catch (e) {
-        alert("Terjadi kesalahan jaringan.");
     }
-}
+
     function resetFilter() {
         document.getElementById('filter_jurusan').value = '';
         document.getElementById('filter_ta').value = '';
+        document.getElementById('filterSearch').value = '';
         fetchKelas();
     }
 </script>

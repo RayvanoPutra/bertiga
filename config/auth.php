@@ -50,6 +50,8 @@ return [
             'driver' => 'jwt',
             'provider' => 'nasabah',
         ],
+
+        'superadmin' => [ 'driver' => 'jwt', 'provider' => 'superadmin', ],
     ],
 
     /*
@@ -84,6 +86,10 @@ return [
             'driver' => 'eloquent',
             'model' => App\Models\Nasabah::class,
         ],
+
+
+
+        
 
         // 'users' => [
         //     'driver' => 'database',

@@ -143,6 +143,7 @@
         </div>
     </div>
 </div>
+
 <div id="modalEdit" class="modal opacity-0 pointer-events-none fixed w-full h-full top-0 left-0 flex items-center justify-center z-50 p-4 transition-all duration-300">
     <div class="modal-overlay absolute w-full h-full bg-black opacity-50" onclick="toggleModal('modalEdit')"></div>
     <div class="modal-container bg-white w-11/12 md:max-w-md mx-auto rounded-xl shadow-2xl z-50 transform scale-95 opacity-0 transition-all duration-300">
@@ -176,10 +177,11 @@
 @endsection
 
 @push('scripts')
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
     const BASE_URL = "{{ \Illuminate\Support\Facades\URL::to('/api') }}";
     const authToken = localStorage.getItem('petugas_token');
-    const userRole = localStorage.getItem('role'); // Ambil role
+    const userRole = localStorage.getItem('role');
     let allKelas = [];
 
     document.addEventListener('DOMContentLoaded', () => {
@@ -188,7 +190,6 @@
             return;
         }
 
-        // 1. Logika Sembunyikan Menu (Agar tidak merusak script lain)
         if (userRole !== 'superadmin') {
             const restrictedMenus = ['Tahun Ajaran', 'Jurusan', 'Kelas', 'Pengaturan Sistem', 'Manajemen Akun'];
             document.querySelectorAll('.sidebar-link').forEach(link => {
@@ -233,17 +234,53 @@
                     const result = await response.json();
 
                     if (response.ok) {
-                        alert("✅ Nasabah berhasil didaftarkan!");
-                        location.reload();
+                        Swal.fire({ icon: 'success', title: 'Berhasil!', text: 'Nasabah berhasil didaftarkan.', timer: 2000, showConfirmButton: false });
+                        setTimeout(() => location.reload(), 2000);
                     } else if (response.status === 422) {
-                        let errorMsg = "⚠️ Gagal Validasi:\n";
-                        Object.values(result.errors).forEach(err => { errorMsg += `• ${err[0]}\n`; });
-                        alert(errorMsg);
+                        let errorMsg = Object.values(result.errors).flat().join("<br>");
+                        Swal.fire({ icon: 'error', title: 'Validasi Gagal', html: errorMsg });
                     } else {
-                        alert("❌ Gagal: " + (result.message || "Error server"));
+                        Swal.fire('Gagal', result.message || "Terjadi kesalahan server", 'error');
                     }
-                } catch (e) { alert("Error koneksi server."); }
+                } catch (e) { Swal.fire('Error', 'Gagal terhubung ke server.', 'error'); }
                 finally { btn.disabled = false; btn.innerText = "Simpan Nasabah"; }
+            });
+        }
+
+        // --- PROSES UPDATE NASABAH ---
+        const formEdit = document.getElementById('formEditNasabah');
+        if (formEdit) {
+            formEdit.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const btn = document.getElementById('btnUpdate');
+                const norek = document.getElementById('edit_no_rekening').value;
+                btn.disabled = true;
+
+                const payload = {
+                    nama: document.getElementById('edit_nama').value,
+                    email: document.getElementById('edit_email').value,
+                    no_telp: document.getElementById('edit_no_telp').value
+                };
+
+                try {
+                    const response = await fetch(`${BASE_URL}/master/nasabah/${norek}`, {
+                        method: 'PUT',
+                        headers: { 
+                            'Authorization': `Bearer ${authToken}`, 
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json'
+                        },
+                        body: JSON.stringify(payload)
+                    });
+                    if (response.ok) {
+                        Swal.fire({ icon: 'success', title: 'Terupdate!', text: 'Data nasabah berhasil diperbarui.', timer: 1500, showConfirmButton: false });
+                        toggleModal('modalEdit');
+                        fetchNasabah();
+                    } else {
+                        Swal.fire('Gagal', 'Tidak dapat memperbarui data.', 'error');
+                    }
+                } catch (e) { Swal.fire('Error', 'Kesalahan sistem.', 'error'); }
+                finally { btn.disabled = false; }
             });
         }
     });
@@ -252,8 +289,6 @@
     async function loadMasterData() {
         try {
             const headers = { 'Authorization': `Bearer ${authToken}`, 'Accept': 'application/json' };
-            
-            // Panggil API secara paralel
             const [resJur, resTA, resKls, resPengaturan] = await Promise.all([
                 fetch(`${BASE_URL}/master/jurusan`, { headers }),
                 fetch(`${BASE_URL}/master/tahun-ajaran`, { headers }),
@@ -266,17 +301,15 @@
             allKelas = await resKls.json();
             const settings = await resPengaturan.json();
 
-            // UPDATE TAMPILAN BIAYA ADMIN
             const dataArr = Array.isArray(settings) ? settings : (settings.data || []);
             const settingPotongan = dataArr.find(s => s.nama_pengaturan === 'jumlah_potongan');
 
             if (settingPotongan && settingPotongan.nilai) {
                 const fee = new Intl.NumberFormat('id-ID').format(settingPotongan.nilai);
                 const elFee = document.getElementById('display_admin_fee');
-                if (elFee) elFee.innerText = `Rp ${fee}`; // MENGUBAH Rp 0 JADI SESUAI DB
+                if (elFee) elFee.innerText = `Rp ${fee}`;
             }
 
-            // ISI DROPDOWN
             const populate = (id, data, valKey, labelKey, defaultText) => {
                 const el = document.getElementById(id);
                 if (!el) return;
@@ -293,9 +326,7 @@
             populate('tahun_ajaran_id', ta, 'kode_tahun_ajaran', 'tahun_ajaran', 'Pilih TA');
             populate('filterKelas', allKelas, 'kode_kelas', 'nama_kelas', 'Semua Kelas');
 
-        } catch (e) {
-            console.error("Gagal load master:", e);
-        }
+        } catch (e) { console.error("Gagal load master:", e); }
     }
 
     // --- TABEL NASABAH ---
@@ -320,32 +351,29 @@
             
             arr.forEach(n => {
                 const kls = n.kelas || null;
-                const ta = kls?.tahun_ajaran ? kls.tahun_ajaran.tahun_ajaran : '-'; //
+                const ta = kls?.tahun_ajaran ? kls.tahun_ajaran.tahun_ajaran : '-';
                 const statusClass = n.status === 'nonaktif' ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700';
 
                 list.insertAdjacentHTML('beforeend', `
-        <tr class="hover:bg-blue-50/50 border-b transition">
-            <td class="px-6 py-4 font-bold text-gray-900">${n.nama}<br><span class="text-[10px] text-gray-400 italic font-mono">${n.no_induk}</span></td>
-            <td class="px-6 py-4 font-mono text-xs font-bold text-blue-700">${n.no_rekening}</td>
-            <td class="px-6 py-4 text-[9px] uppercase font-black text-gray-500">${n.jenis_rekening}</td>
-            <td class="px-6 py-4 text-xs"><b>${kls?.nama_kelas || '-'}</b><br><span class="text-[10px] text-gray-400 uppercase font-bold">${kls?.jurusan?.nama_jurusan || '-'}</span></td>
-            <td class="px-6 py-4 text-xs font-bold text-gray-400">${ta}</td>
-            <td class="px-6 py-4 font-black text-green-600 text-right italic">Rp ${new Intl.NumberFormat('id-ID').format(n.saldo)}</td>
-            <td class="px-6 py-4 text-center"><span class="px-2 py-1 rounded-full text-[10px] font-black uppercase ${statusClass}">${n.status}</span></td>
-            
-            <td class="px-6 py-4 text-center">
-                <div class="flex justify-center gap-1.5">
-                    <button onclick="openEditModal('${n.no_rekening}', '${n.nama}', '${n.email}', '${n.no_telp || ''}')" class="p-1.5 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-600 hover:text-white transition">✏️</button>
-                    <button onclick="hapusNasabah('${n.no_rekening}')" class="p-1.5 bg-red-50 text-red-600 rounded-lg hover:bg-red-600 hover:text-white transition">🗑️</button>
-                </div>
-            </td>
-        </tr>
-                `);
+                    <tr class="hover:bg-blue-50/50 border-b transition">
+                        <td class="px-6 py-4 font-bold text-gray-900">${n.nama}<br><span class="text-[10px] text-gray-400 italic font-mono">${n.no_induk}</span></td>
+                        <td class="px-6 py-4 font-mono text-xs font-bold text-blue-700">${n.no_rekening}</td>
+                        <td class="px-6 py-4 text-[9px] uppercase font-black text-gray-500">${n.jenis_rekening}</td>
+                        <td class="px-6 py-4 text-xs"><b>${kls?.nama_kelas || '-'}</b><br><span class="text-[10px] text-gray-400 uppercase font-bold">${kls?.jurusan?.nama_jurusan || '-'}</span></td>
+                        <td class="px-6 py-4 text-xs font-bold text-gray-400">${ta}</td>
+                        <td class="px-6 py-4 font-black text-green-600 text-right italic">Rp ${new Intl.NumberFormat('id-ID').format(n.saldo)}</td>
+                        <td class="px-6 py-4 text-center"><span class="px-2 py-1 rounded-full text-[10px] font-black uppercase ${statusClass}">${n.status}</span></td>
+                        <td class="px-6 py-4 text-center">
+                            <div class="flex justify-center gap-1.5">
+                                <button onclick="openEditModal('${n.no_rekening}', '${n.nama.replace(/'/g, "\\'")}', '${n.email}', '${n.no_telp || ''}')" class="p-1.5 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-600 hover:text-white transition">✏️</button>
+                                <button onclick="hapusNasabah('${n.no_rekening}')" class="p-1.5 bg-red-50 text-red-600 rounded-lg hover:bg-red-600 hover:text-white transition">🗑️</button>
+                            </div>
+                        </td>
+                    </tr>`);
             });
         } catch (e) { loader.classList.add('hidden'); console.error(e); }
     }
 
-    // --- FILTER BERANTAI (MODAL) ---
     function filterKelasModal() {
         const jur = document.getElementById('jurusan_id').value;
         const ta = document.getElementById('tahun_ajaran_id').value;
@@ -362,34 +390,43 @@
         }
     }
 
-    // --- FUNGSI BUKA MODAL EDIT ---
-function openEditModal(norek, nama, email, telp) {
-    document.getElementById('edit_no_rekening').value = norek;
-    document.getElementById('edit_nama').value = nama;
-    document.getElementById('edit_email').value = email;
-    document.getElementById('edit_no_telp').value = telp;
-    toggleModal('modalEdit'); // Pastikan fungsi toggleModal Anda sudah benar
-}
+    function openEditModal(norek, nama, email, telp) {
+        document.getElementById('edit_no_rekening').value = norek;
+        document.getElementById('edit_nama').value = nama;
+        document.getElementById('edit_email').value = email;
+        document.getElementById('edit_no_telp').value = telp;
+        toggleModal('modalEdit');
+    }
 
-// --- FUNGSI HAPUS NASABAH ---
-async function hapusNasabah(norek) {
-    if (!confirm(`Hapus rekening ${norek}?\nSaldo nasabah harus Rp 0 agar bisa dihapus.`)) return;
-    try {
-        const res = await fetch(`${BASE_URL}/master/nasabah/${norek}`, {
-            method: 'DELETE', 
-            headers: { 'Authorization': `Bearer ${authToken}`, 'Accept': 'application/json' }
+    async function hapusNasabah(norek) {
+        const confirm = await Swal.fire({
+            title: 'Hapus Nasabah?',
+            text: `Rekening ${norek} akan dihapus. Saldo harus Rp 0 untuk menghapus.`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Ya, Hapus!',
+            cancelButtonText: 'Batal'
         });
-        const r = await res.json();
-        if (res.ok) { 
-            alert("✅ Nasabah berhasil dihapus."); 
-            fetchNasabah(); // Refresh tabel
-        } else { 
-            alert("❌ Gagal: " + (r.message || "Error")); 
-        }
-    } catch (e) { alert("Error sistem."); }
-}
 
-    // --- UI HELPERS ---
+        if (!confirm.isConfirmed) return;
+
+        try {
+            const res = await fetch(`${BASE_URL}/master/nasabah/${norek}`, {
+                method: 'DELETE', 
+                headers: { 'Authorization': `Bearer ${authToken}`, 'Accept': 'application/json' }
+            });
+            const r = await res.json();
+            if (res.ok) { 
+                Swal.fire('Terhapus!', 'Nasabah berhasil dihapus.', 'success');
+                fetchNasabah();
+            } else { 
+                Swal.fire('Gagal!', r.message || "Error", 'error'); 
+            }
+        } catch (e) { Swal.fire('Error', 'Kesalahan sistem.', 'error'); }
+    }
+
     function toggleSiswaFields() {
         const isSiswa = document.getElementById('jenis_rekening').value === 'siswa';
         document.getElementById('siswaFields').style.display = isSiswa ? 'block' : 'none';

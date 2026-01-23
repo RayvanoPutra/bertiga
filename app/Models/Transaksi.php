@@ -11,7 +11,7 @@ class Transaksi extends Model
     use HasFactory;
 
     protected $table = 'transaksi';
-    
+
     // Primary Key String
     protected $primaryKey = 'kode_transaksi';
     public $incrementing = false;
@@ -47,4 +47,9 @@ class Transaksi extends Model
     {
         return $this->belongsTo(JenisTransaksi::class, 'kode_jenis', 'kode_jenis');
     }
+
+    // public function nasabah()
+    // {
+    //     return $this->belongsTo(Nasabah::class, 'no_rekening', 'no_rekening');
+    // }
 }

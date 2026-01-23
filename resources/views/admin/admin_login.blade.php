@@ -19,10 +19,10 @@
         <form id="loginForm" class="space-y-4">
             <!-- Input URL Server (Untuk Development, bisa disembunyikan nanti) -->
             <div>
-                <label class="block text-xs font-bold text-gray-500 uppercase">Alamat API Server</label>
+                <!-- <label class="block text-xs font-bold text-gray-500 uppercase">Alamat API Server</label> -->
                 <!-- PERBAIKAN: Menggunakan Facade URL::to -->
-                <input type="text" id="serverUrl" class="mt-1 w-full p-2 border rounded text-sm font-mono bg-gray-50" value="{{ \Illuminate\Support\Facades\URL::to('/api') }}" required>
-                <p class="text-xs text-gray-400 mt-1">Otomatis terisi alamat server ini.</p>
+                <input type="hidden" id="serverUrl" class="mt-1 w-full p-2 border rounded text-sm font-mono bg-gray-50" value="{{ \Illuminate\Support\Facades\URL::to('/api') }}" required>
+                <!-- <p class="text-xs text-gray-400 mt-1">Otomatis terisi alamat server ini.</p> -->
             </div>
 
             <div>
@@ -77,7 +77,7 @@
 
         try {
             // Kita gunakan rute login langsung agar lebih cepat
-            const targetUrl = `${urlInput}/auth/petugas/login`;
+            const targetUrl = `${urlInput}/login/petugas`;
             
             const response = await fetch(targetUrl, {
                 method: 'POST',

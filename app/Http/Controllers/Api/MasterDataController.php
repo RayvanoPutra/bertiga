@@ -237,7 +237,7 @@ public function deleteKelas($kode_kelas)
 }
 
     // ==========================================
-    // PENGATURAN
+    // PETUGAS
     // ==========================================
 
 public function getPetugas() {
@@ -247,49 +247,63 @@ public function getPetugas() {
 // app/Http/Controllers/Api/MasterDataController.php
 
 public function storePetugas(Request $request) {
-    // 1. Validasi tanpa kode_petugas (karena dibuat otomatis)
+    // 1. Validasi dengan pesan kustom Bahasa Indonesia
     $validator = Validator::make($request->all(), [
         'nama_petugas' => 'required|string',
         'username'     => 'required|unique:petugas,username',
         'password'     => 'required|min:6',
         'role'         => 'required|in:superadmin,admin'
+    ], [
+        'nama_petugas.required' => 'Nama petugas wajib diisi.',
+        'username.required'     => 'Username wajib diisi.',
+        'username.unique'       => 'Username sudah digunakan, silakan pilih yang lain.',
+        'password.required'     => 'Password wajib diisi.',
+        'password.min'          => 'Password minimal harus 6 karakter.',
+        'role.required'         => 'Role wajib dipilih.',
     ]);
 
-    if ($validator->fails()) return response()->json($validator->errors(), 422);
+    // Jika validasi gagal, kirimkan objek errors
+    if ($validator->fails()) {
+        return response()->json([
+            'message' => 'Validasi gagal',
+            'errors' => $validator->errors()
+        ], 422);
+    }
 
-    // 2. LOGIKA GENERATE KODE OTOMATIS
+    // 2. Logika Generate Kode Otomatis
     $role = $request->role;
     $prefix = ($role === 'superadmin') ? 'SADM' : 'ADM';
 
-    // Cari kode petugas terakhir yang diawali dengan prefix tersebut
     $lastPetugas = \App\Models\Petugas::where('kode_petugas', 'like', $prefix . '%')
         ->orderBy('kode_petugas', 'desc')
         ->first();
 
     if ($lastPetugas) {
-        // Ambil angka setelah prefix (misal ADM001 -> ambil 001)
         $lastNumber = (int) substr($lastPetugas->kode_petugas, strlen($prefix));
         $nextNumber = $lastNumber + 1;
     } else {
         $nextNumber = 1;
     }
 
-    // Format hasil akhir: ADM001 atau SADM001
     $kodeOtomatis = $prefix . str_pad($nextNumber, 3, '0', STR_PAD_LEFT);
 
     // 3. Simpan ke Database
-    $petugas = \App\Models\Petugas::create([
-        'kode_petugas' => $kodeOtomatis,
-        'nama_petugas' => $request->nama_petugas,
-        'username'     => $request->username,
-        'password'     => Hash::make($request->password),
-        'role'         => $request->role,
-    ]);
+    try {
+        $petugas = \App\Models\Petugas::create([
+            'kode_petugas' => $kodeOtomatis,
+            'nama_petugas' => $request->nama_petugas,
+            'username'     => $request->username,
+            'password'     => Hash::make($request->password),
+            'role'         => $request->role,
+        ]);
 
-    return response()->json([
-        'message' => 'Petugas berhasil ditambahkan dengan kode: ' . $kodeOtomatis,
-        'data' => $petugas
-    ]);
+        return response()->json([
+            'message' => 'Petugas berhasil ditambahkan',
+            'data' => $petugas
+        ], 201);
+    } catch (\Exception $e) {
+        return response()->json(['message' => 'Terjadi kesalahan database'], 500);
+    }
 }
 
 public function deletePetugas($kode) {
@@ -350,7 +364,8 @@ public function updatePengaturan(Request $request)
 
         return response()->json(['message' => 'Berhasil diperbarui']);
     } catch (\Exception $e) {
-        return response()->json(['message' => $e.getMessage()], 500);
+        // Gunakan -> untuk memanggil method di dalam objek
+        return response()->json(['message' => $e->getMessage()], 500);
     }
 }
 }
