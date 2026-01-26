@@ -349,9 +349,9 @@ class NasabahController extends Controller
             $totalNasabah = \App\Models\Nasabah::count(); // Jumlah nasabah terdaftar
 
             // Menghitung setoran masuk hari ini (opsional jika tabel transaksi sudah ada)
-            $setoranHariIni = \App\Models\Transaksi::where('jenis_transaksi', 'setor')
+            $setoranHariIni = \App\Models\Transaksi::where('jenis_transaksi', 'SETOR')
                 ->whereDate('created_at', today())
-                ->sum('nominal');
+                ->sum('jumlah');
 
             return response()->json([
                 'total_saldo' => $totalSaldo,
