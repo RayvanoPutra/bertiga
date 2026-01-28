@@ -44,9 +44,9 @@ class AuthController extends Controller
 
     public function loginNasabah(Request $request)
     {
-        // 1. Validasi Input
+        // 1. VALIDASI INPUT
         $validator = Validator::make($request->all(), [
-            'no_rekening' => 'required', // Nasabah login pakai No Rekening
+            'no_rekening' => 'required',
             'password'    => 'required',
         ]);
 
@@ -54,18 +54,45 @@ class AuthController extends Controller
             return response()->json($validator->errors(), 422);
         }
 
-        // 2. Ambil Credentials
-        $credentials = $request->only('no_rekening', 'password');
+        // 2. CARI NASABAH & LOAD RELASI
+        $nasabah = Nasabah::with('kelas.tahunAjaran')
+            ->where('no_rekening', $request->no_rekening)
+            ->first();
 
-        // 3. Cek ke Guard 'nasabah'
-        if (! $token = Auth::guard('nasabah')->attempt($credentials)) {
+        // 3. CEK PASSWORD MANUAL
+        // Kita cek manual dulu biar token GAK ke-create kalau user diblokir
+        if (!$nasabah || !Hash::check($request->password, $nasabah->password)) {
             return response()->json([
                 'success' => false,
-                'message' => 'No Rekening atau Password salah.',
+                'message' => 'Login Gagal',
+                'error'   => 'No Rekening atau Password salah.'
             ], 401);
         }
 
-        // 4. Jika sukses, kembalikan Token
+        // 4. CEK STATUS PERSONAL (Nonaktif)
+        if ($nasabah->status == 'nonaktif') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Akses Ditolak',
+                'error'   => 'Akun Anda berstatus NONAKTIF. Silakan hubungi petugas.'
+            ], 403);
+        }
+
+        // 5. CEK STATUS TAHUN AJARAN (Logic Penjagaan)
+        if ($nasabah->kelas && $nasabah->kelas->tahunAjaran && $nasabah->kelas->tahunAjaran->status == 'nonaktif') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Akses Ditolak',
+                'error'   => 'Tahun Ajaran kelas Anda (' . $nasabah->kelas->tahunAjaran->tahun_ajaran . ') sudah ditutup/nonaktif.'
+            ], 403);
+        }
+
+        // 6. GENERATE TOKEN (JWT)
+        if (! $token = Auth::guard('nasabah')->login($nasabah)) {
+            return response()->json(['error' => 'Gagal membuat token'], 500);
+        }
+
+        // 7. RETURN RESPONSE
         return $this->respondWithToken($token, 'nasabah');
     }
 

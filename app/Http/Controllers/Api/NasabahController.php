@@ -86,12 +86,24 @@ class NasabahController extends Controller
             'saldo_awal.min' => 'Setoran awal minimal adalah Rp 20.000.',
         ]);
 
-        if ($validator->fails()) {
-            // Mengirimkan detail 'errors' agar bisa dibaca JavaScript
-            return response()->json([
-                'message' => 'Validasi Gagal',
-                'errors' => $validator->errors()
-            ], 422);
+        if ($request->jenis_rekening == 'siswa' && $request->kode_kelas) {
+
+            // Ambil data kelas beserta info Tahun Ajarannya
+            $cekKelas = Kelas::with('tahunAjaran')
+                ->where('kode_kelas', $request->kode_kelas)
+                ->first();
+
+            // Logic: Jika kelas ditemukan DAN punya tahun ajaran DAN statusnya nonaktif
+            if ($cekKelas && $cekKelas->tahunAjaran && $cekKelas->tahunAjaran->status == 'nonaktif') {
+                return response()->json([
+                    'message' => 'Validasi Gagal: Tahun Ajaran Tutup',
+                    'errors' => [
+                        'kode_kelas' => [
+                            'Gagal! Kelas ini berada di Tahun Ajaran Nonaktif (' . $cekKelas->tahunAjaran->tahun_ajaran . ').'
+                        ]
+                    ]
+                ], 422);
+            }
         }
 
         // 2. Ambil Pengaturan Biaya Admin Terbaru
@@ -170,9 +182,6 @@ class NasabahController extends Controller
                 'jenis_rekening' => $request->jenis_rekening,
                 'kode_kelas' => $request->kode_kelas,
                 'saldo' => $saldoBersih,
-
-                // HAPUS BARIS INI (KARENA KOLOM USERNAME DIHAPUS)
-                // 'username' => $no_rekening_baru, 
 
                 'password' => Hash::make($request->password),
                 'status' => 'aktif',
@@ -297,6 +306,7 @@ class NasabahController extends Controller
             'nama' => 'required|string',
             'email' => 'required|email|unique:nasabah,email,' . $nasabah->no_rekening . ',no_rekening',
             'no_telp' => 'nullable|string',
+            'status' => 'required|in:aktif,nonaktif'
         ]);
 
         if ($validator->fails()) {
@@ -307,6 +317,7 @@ class NasabahController extends Controller
             'nama' => $request->nama,
             'email' => $request->email,
             'no_telp' => $request->no_telp,
+            'status' => $request->status
         ]);
 
         return response()->json(['message' => 'Berhasil memperbarui data']);
@@ -319,7 +330,7 @@ class NasabahController extends Controller
         $validator = Validator::make($request->all(), [
             'no_rekening_list' => 'required|array|min:1',
             'no_rekening_list.*' => 'string|exists:nasabah,no_rekening',
-            'status_baru' => 'required|in:aktif,nonaktif,alumni',
+            'status_baru' => 'required|in:aktif,nonaktif',
         ]);
 
         if ($validator->fails()) {
@@ -375,13 +386,13 @@ class NasabahController extends Controller
             });
         }
         if ($request->jurusan) {
-            $query->whereHas('kelas', fn ($q) => $q->where('kode_jurusan', $request->jurusan));
+            $query->whereHas('kelas', fn($q) => $q->where('kode_jurusan', $request->jurusan));
         }
         if ($request->kelas) {
             $query->where('kode_kelas', $request->kelas);
         }
         if ($request->tahun_ajaran) {
-            $query->whereHas('kelas', fn ($q) => $q->where('kode_tahun_ajaran', $request->tahun_ajaran));
+            $query->whereHas('kelas', fn($q) => $q->where('kode_tahun_ajaran', $request->tahun_ajaran));
         }
 
         $data = $query->orderBy('nama', 'asc')->get();
