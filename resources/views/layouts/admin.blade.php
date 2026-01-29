@@ -162,39 +162,106 @@
 
     @stack('scripts')
 
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script> @stack('scripts')
     <script>
+        (function() {
+            const token = localStorage.getItem('petugas_token');
+            // Cek 1: Jika tidak ada token sama sekali, tendang ke login
+            if (!token) {
+                // Cegah redirect loop jika sudah di halaman login
+                if (!window.location.href.includes('/admin/login')) {
+                    window.location.href = "{{ url('/admin/login') }}";
+                }
+            }
+        })();
+        // Kita timpa fungsi fetch bawaan browser agar otomatis cek error 401
+        const originalFetch = window.fetch;
+        window.fetch = async function(...args) {
+            let url = args[0];
+
+            // 1. JANGAN CEGAT KALAU INI HALAMAN LOGIN
+            if (typeof url === 'string' && url.includes('/login')) {
+                return originalFetch(...args);
+            }
+
+            try {
+                const response = await originalFetch(...args);
+
+                // 2. JIKA SESI HABIS (401)
+                if (response.status === 401) {
+
+                    // 🔥 PAUSE DISINI: TUNGGU SAMPAI USER KLIK OK
+                    await Swal.fire({
+                        icon: 'warning',
+                        title: 'Sesi Telah Berakhir',
+                        text: 'Demi keamanan, silakan login kembali untuk melanjutkan.',
+                        confirmButtonText: 'Login Ulang',
+                        confirmButtonColor: '#3085d6',
+                        allowOutsideClick: false, // Gabisa klik luar
+                        allowEscapeKey: false, // Gabisa tombol Esc
+                        allowEnterKey: true,
+                        showCancelButton: false,
+                        timer: null // ❌ JANGAN PAKAI TIMER
+                        // -----------------------------
+
+                    }).then((result) => {
+                        // HANYA JALAN SETELAH TOMBOL DIKLIK
+                        if (result.isConfirmed) {
+                            localStorage.clear(); // Hapus sesi tab ini
+                            window.location.href = "{{ url('/admin/login') }}";
+                        }
+                    });
+
+                    // selama nunggu user nge-klik tombol
+                    return {
+                        ok: false,
+                        status: 401,
+                        json: async () => ({})
+                    };
+                }
+
+                return response;
+            } catch (error) {
+                throw error;
+            }
+        };
+
+        // ==========================================
+        // 🛠️ UI LOGIC (SIDEBAR & USER INFO)
+        // ==========================================
         document.addEventListener('DOMContentLoaded', () => {
             const role = localStorage.getItem('role');
             const namaPetugas = localStorage.getItem('nama_petugas') || 'Petugas';
 
-            // 1. UPDATE SIDEBAR USER INFO SECARA DINAMIS
+            // Update Info User di Sidebar
             const elRoleName = document.getElementById('sidebarRoleName');
             const elBadge = document.getElementById('sidebarBadge');
 
-            elRoleName.innerText = namaPetugas;
+            if (elRoleName) elRoleName.innerText = namaPetugas;
 
-            if (role === 'superadmin') {
-                elBadge.innerText = 'SA';
-                elBadge.classList.replace('bg-blue-500', 'bg-indigo-600');
-            } else if (role === 'admin') {
-                elBadge.innerText = 'A';
-                elBadge.classList.replace('bg-blue-500', 'bg-emerald-500');
-            } else {
-                elBadge.innerText = 'US';
+            if (elBadge) {
+                if (role === 'superadmin') {
+                    elBadge.innerText = 'SA';
+                    elBadge.classList.replace('bg-blue-500', 'bg-indigo-600');
+                } else if (role === 'admin') {
+                    elBadge.innerText = 'A';
+                    elBadge.classList.replace('bg-blue-500', 'bg-emerald-500');
+                } else {
+                    elBadge.innerText = 'US';
+                }
             }
 
-            // 2. LOGIKA PEMBATASAN MENU
+            // Pembatasan Menu Berdasarkan Role
             if (role !== 'superadmin') {
                 const restrictedMenus = ['Tahun Ajaran', 'Jurusan', 'Kelas', 'Pengaturan Sistem', 'Manajemen Akun'];
 
                 document.querySelectorAll('.sidebar-link').forEach(link => {
                     const menuText = link.innerText.trim();
-                    if (restrictedMenus.includes(menuText)) {
+                    if (restrictedMenus.some(menu => menuText.includes(menu))) {
                         link.remove();
                     }
                 });
 
-                // Hapus label "Data Master"
                 const masterSection = document.getElementById('masterDataSection');
                 if (masterSection) {
                     const label = masterSection.querySelector('p');
@@ -203,25 +270,39 @@
             }
         });
 
-        // FUNGSI LOGOUT
+        // ==========================================
+        // 🚪 LOGOUT FUNCTION
+        // ==========================================
         async function logout() {
-            if (!confirm("Apakah Anda yakin ingin keluar?")) return;
-
-            const token = localStorage.getItem('petugas_token');
-            try {
-                await fetch("/api/logout", {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Accept': 'application/json'
+            Swal.fire({
+                title: 'Konfirmasi Logout',
+                text: "Apakah Anda yakin ingin keluar aplikasi?",
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Ya, Keluar',
+                cancelButtonText: 'Batal'
+            }).then(async (result) => {
+                if (result.isConfirmed) {
+                    const token = localStorage.getItem('petugas_token');
+                    try {
+                        // Request logout ke server (optional, biar token di blacklist)
+                        await originalFetch("{{ url('/api/logout') }}", {
+                            method: 'POST',
+                            headers: {
+                                'Authorization': `Bearer ${token}`,
+                                'Accept': 'application/json'
+                            }
+                        });
+                    } catch (e) {
+                        console.log("Offline logout");
+                    } finally {
+                        localStorage.clear();
+                        window.location.href = "{{ url('/admin/login') }}";
                     }
-                });
-            } catch (e) {
-                console.error("Server logout error, clearing local...");
-            } finally {
-                localStorage.clear(); // Hapus semua data login
-                window.location.href = "/admin/login";
-            }
+                }
+            });
         }
     </script>
 </body>

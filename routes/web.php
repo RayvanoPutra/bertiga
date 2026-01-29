@@ -68,6 +68,6 @@ Route::get('/admin/transaksi', function() {
 
 // pdf transaksi
 Route::get('/admin/transaksi/cetak-pdf', [TransaksiController::class, 'cetakPdf'])->name('transaksi.cetak');
-Route::get('/admin/transaksi/cetak-struk/{kode}', [TransaksiController::class, 'cetakStruk'])->name('transaksi.struk');
+// Route::get('/admin/transaksi/cetak-struk/{kode}', [TransaksiController::class, 'cetakStruk'])->name('transaksi.struk');
 
 

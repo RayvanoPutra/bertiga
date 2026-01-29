@@ -104,59 +104,61 @@
 @endsection
 
 @push('scripts')
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
-<script>
-    const authToken = localStorage.getItem('petugas_token');
-    const BASE_URL = "/api";
+    <script>
+        const authToken = localStorage.getItem('petugas_token');
+        const BASE_URL = "/api";
 
-    document.addEventListener('DOMContentLoaded', () => {
-        if (!authToken) {
-            window.location.href = "/admin/login";
-        }
-        fetchJurusan();
-    });
+        document.addEventListener('DOMContentLoaded', () => {
+            if (!authToken) {
+                window.location.href = "/admin/login";
+            }
+            fetchJurusan();
+        });
 
-    async function fetchJurusan() {
-        const tbody = document.getElementById('tbodyJurusan');
-        const fSearch = document.getElementById('filterSearch').value.toLowerCase();
-        tbody.innerHTML = '<tr><td colspan="4" class="text-center py-10 text-gray-400 italic">Memuat data...</td></tr>';
+        async function fetchJurusan() {
+            const tbody = document.getElementById('tbodyJurusan');
+            const fSearch = document.getElementById('filterSearch').value.toLowerCase();
+            tbody.innerHTML =
+                '<tr><td colspan="4" class="text-center py-10 text-gray-400 italic">Memuat data...</td></tr>';
 
-        try {
-            const res = await fetch(`${BASE_URL}/master/jurusan`, {
-                headers: { 
-                    'Authorization': `Bearer ${authToken}`, 
-                    'Accept': 'application/json' 
-                }
-            });
-
-            if (res.status === 401) {
-                Swal.fire('Sesi Berakhir', 'Silakan login kembali', 'warning').then(() => {
-                    localStorage.removeItem('petugas_token');
-                    window.location.href = "/admin/login";
+            try {
+                const res = await fetch(`${BASE_URL}/master/jurusan`, {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`,
+                        'Accept': 'application/json'
+                    }
                 });
-                return;
-            }
 
-            if (!res.ok) throw new Error("Gagal mengambil data");
+                if (res.status === 401) {
+                    Swal.fire('Sesi Berakhir', 'Silakan login kembali', 'warning').then(() => {
+                        localStorage.removeItem('petugas_token');
+                        window.location.href = "/admin/login";
+                    });
+                    return;
+                }
 
-            let data = await res.json();
+                if (!res.ok) throw new Error("Gagal mengambil data");
 
-            if (fSearch) {
-                data = data.filter(i => 
-                    i.nama_jurusan.toLowerCase().includes(fSearch) || 
-                    i.kode_jurusan.toLowerCase().includes(fSearch)
-                );
-            }
+                let data = await res.json();
 
-            tbody.innerHTML = '';
-            if (data.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="4" class="text-center py-10 text-gray-400">Data jurusan tidak ditemukan.</td></tr>';
-                return;
-            }
+                if (fSearch) {
+                    data = data.filter(i =>
+                        i.nama_jurusan.toLowerCase().includes(fSearch) ||
+                        i.kode_jurusan.toLowerCase().includes(fSearch)
+                    );
+                }
 
-            data.forEach((item, index) => {
-                const row = `
+                tbody.innerHTML = '';
+                if (data.length === 0) {
+                    tbody.innerHTML =
+                        '<tr><td colspan="4" class="text-center py-10 text-gray-400">Data jurusan tidak ditemukan.</td></tr>';
+                    return;
+                }
+
+                data.forEach((item, index) => {
+                    const row = `
                     <tr class="hover:bg-blue-50/30 transition border-b border-gray-100 last:border-0">
                         <td class="px-6 py-4 text-center text-gray-400 font-mono text-xs">${index + 1}</td>
                         <td class="px-6 py-4"><span class="bg-indigo-50 text-indigo-700 px-2 py-1 rounded font-bold text-xs uppercase border border-indigo-100">${item.kode_jurusan}</span></td>
@@ -169,130 +171,145 @@
                         </td>
                     </tr>
                 `;
-                tbody.insertAdjacentHTML('beforeend', row);
-            });
-        } catch (e) { 
-            console.error(e);
-            tbody.innerHTML = '<tr><td colspan="4" class="text-center py-10 text-red-400 font-bold">Koneksi ke server gagal!</td></tr>';
-        }
-    }
-
-    // Modal Helpers
-    function openModalJurusan() {
-        const modal = document.getElementById('modalJurusan');
-        const container = document.getElementById('modalContainer');
-        modal.classList.remove('hidden');
-        setTimeout(() => {
-            container.classList.remove('scale-95', 'opacity-0');
-            container.classList.add('scale-100', 'opacity-100');
-        }, 10);
-        document.getElementById('formJurusan').reset();
-        document.getElementById('kode_jurusan_lama').value = '';
-        document.getElementById('modalTitle').innerText = "Tambah Jurusan";
-    }
-
-    function closeModalJurusan() {
-        const container = document.getElementById('modalContainer');
-        container.classList.remove('scale-100', 'opacity-100');
-        container.classList.add('scale-95', 'opacity-0');
-        setTimeout(() => document.getElementById('modalJurusan').classList.add('hidden'), 300);
-    }
-
-    // Handle Form Submit (Tambah & Update)
-    document.getElementById('formJurusan').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        
-        const kodeLama = document.getElementById('kode_jurusan_lama').value;
-        const url = kodeLama ? `${BASE_URL}/master/jurusan/${kodeLama}` : `${BASE_URL}/master/jurusan`;
-        const method = kodeLama ? 'PUT' : 'POST';
-
-        const payload = {
-            kode_jurusan: document.getElementById('input_kode_jurusan').value.toUpperCase(),
-            nama_jurusan: document.getElementById('input_nama_jurusan').value
-        };
-
-        // Loading state
-        const btnSubmit = document.getElementById('btnSimpanJurusan');
-        const originalText = btnSubmit.innerText;
-        btnSubmit.disabled = true;
-        btnSubmit.innerText = "Menyimpan...";
-
-        try {
-            const res = await fetch(url, {
-                method: method,
-                headers: { 
-                    'Authorization': `Bearer ${authToken}`, 
-                    'Content-Type': 'application/json', 
-                    'Accept': 'application/json' 
-                },
-                body: JSON.stringify(payload)
-            });
-
-            const result = await res.json();
-
-            if (res.ok) {
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Berhasil!',
-                    text: kodeLama ? 'Data jurusan berhasil diperbarui' : 'Data jurusan berhasil ditambahkan',
-                    timer: 2000,
-                    showConfirmButton: false
+                    tbody.insertAdjacentHTML('beforeend', row);
                 });
-                closeModalJurusan();
-                fetchJurusan();
-            } else {
-                Swal.fire('Gagal!', result.message || 'Terjadi kesalahan saat menyimpan data', 'error');
+            } catch (e) {
+                console.error(e);
+                tbody.innerHTML =
+                    '<tr><td colspan="4" class="text-center py-10 text-red-400 font-bold">Koneksi ke server gagal!</td></tr>';
             }
-        } catch (e) { 
-            Swal.fire('Error!', 'Koneksi ke server terputus', 'error');
-        } finally {
-            btnSubmit.disabled = false;
-            btnSubmit.innerText = originalText;
         }
-    });
 
-    function editJurusan(kode, nama) {
-        openModalJurusan();
-        document.getElementById('modalTitle').innerText = "Edit Jurusan";
-        document.getElementById('kode_jurusan_lama').value = kode;
-        document.getElementById('input_kode_jurusan').value = kode;
-        document.getElementById('input_nama_jurusan').value = nama;
-    }
+        // Modal Helpers
+        function openModalJurusan() {
+            const modal = document.getElementById('modalJurusan');
+            const container = document.getElementById('modalContainer');
+            const inputKode = document.getElementById('input_kode_jurusan');
 
-    async function deleteJurusan(kode) {
-        const confirm = await Swal.fire({
-            title: 'Apakah anda yakin?',
-            text: `Hapus jurusan ${kode}? Data kelas yang terkait mungkin akan terdampak.`,
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#4f46e5',
-            cancelButtonColor: '#ef4444',
-            confirmButtonText: 'Ya, Hapus!',
-            cancelButtonText: 'Batal'
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                container.classList.remove('scale-95', 'opacity-0');
+                container.classList.add('scale-100', 'opacity-100');
+            }, 10);
+            document.getElementById('formJurusan').reset();
+            document.getElementById('kode_jurusan_lama').value = '';
+            document.getElementById('modalTitle').innerText = "Tambah Jurusan";
+
+            inputKode.disabled = false; // Aktifkan input
+            inputKode.classList.remove('bg-gray-100', 'cursor-not-allowed'); // Hapus style abu-abu
+            inputKode.classList.add('bg-white');
+        }
+
+        function closeModalJurusan() {
+            const container = document.getElementById('modalContainer');
+            container.classList.remove('scale-100', 'opacity-100');
+            container.classList.add('scale-95', 'opacity-0');
+            setTimeout(() => document.getElementById('modalJurusan').classList.add('hidden'), 300);
+        }
+
+        // Handle Form Submit (Tambah & Update)
+        document.getElementById('formJurusan').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const kodeLama = document.getElementById('kode_jurusan_lama').value;
+            const url = kodeLama ? `${BASE_URL}/master/jurusan/${kodeLama}` : `${BASE_URL}/master/jurusan`;
+            const method = kodeLama ? 'PUT' : 'POST';
+
+            const payload = {
+                kode_jurusan: document.getElementById('input_kode_jurusan').value.toUpperCase(),
+                nama_jurusan: document.getElementById('input_nama_jurusan').value
+            };
+
+            // Loading state
+            const btnSubmit = document.getElementById('btnSimpanJurusan');
+            const originalText = btnSubmit.innerText;
+            btnSubmit.disabled = true;
+            btnSubmit.innerText = "Menyimpan...";
+
+            try {
+                const res = await fetch(url, {
+                    method: method,
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`,
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                const result = await res.json();
+
+                if (res.ok) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Berhasil!',
+                        text: kodeLama ? 'Data jurusan berhasil diperbarui' :
+                            'Data jurusan berhasil ditambahkan',
+                        timer: 2000,
+                        showConfirmButton: false
+                    });
+                    closeModalJurusan();
+                    fetchJurusan();
+                } else {
+                    Swal.fire('Gagal!', result.message || 'Terjadi kesalahan saat menyimpan data', 'error');
+                }
+            } catch (e) {
+                Swal.fire('Error!', 'Koneksi ke server terputus', 'error');
+            } finally {
+                btnSubmit.disabled = false;
+                btnSubmit.innerText = originalText;
+            }
         });
 
-        if (!confirm.isConfirmed) return;
+        function editJurusan(kode, nama) {
+            openModalJurusan();
+            document.getElementById('modalTitle').innerText = "Edit Jurusan";
+            document.getElementById('kode_jurusan_lama').value = kode;
 
-        try {
-            const res = await fetch(`${BASE_URL}/master/jurusan/${kode}`, {
-                method: 'DELETE', 
-                headers: { 'Authorization': `Bearer ${authToken}` }
+            const inputKode = document.getElementById('input_kode_jurusan');
+            inputKode.value = kode;
+            document.getElementById('input_nama_jurusan').value = nama;
+            inputKode.disabled = true; // Nonaktifkan input
+            inputKode.classList.remove('bg-white');
+            inputKode.classList.add('bg-gray-100', 'cursor-not-allowed');
+        }
+
+        async function deleteJurusan(kode) {
+            const confirm = await Swal.fire({
+                title: 'Apakah anda yakin?',
+                text: `Hapus jurusan ${kode}? Data kelas yang terkait mungkin akan terdampak.`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#4f46e5',
+                cancelButtonColor: '#ef4444',
+                confirmButtonText: 'Ya, Hapus!',
+                cancelButtonText: 'Batal'
             });
 
-            if (res.ok) {
-                Swal.fire('Terhapus!', 'Data jurusan berhasil dihapus.', 'success');
-                fetchJurusan();
-            } else {
-                Swal.fire('Gagal!', 'Data gagal dihapus dari server.', 'error');
-            }
-        } catch (e) {
-            Swal.fire('Error!', 'Terjadi kesalahan koneksi.', 'error');
-        }
-    }
+            if (!confirm.isConfirmed) return;
 
-    function resetFilter() {
-        document.getElementById('filterSearch').value = '';
-        fetchJurusan();
-    }
-</script>
+            try {
+                const res = await fetch(`${BASE_URL}/master/jurusan/${kode}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+
+                if (res.ok) {
+                    Swal.fire('Terhapus!', 'Data jurusan berhasil dihapus.', 'success');
+                    fetchJurusan();
+                } else {
+                    Swal.fire('Gagal!', 'Data gagal dihapus dari server.', 'error');
+                }
+            } catch (e) {
+                Swal.fire('Error!', 'Terjadi kesalahan koneksi.', 'error');
+            }
+        }
+
+        function resetFilter() {
+            document.getElementById('filterSearch').value = '';
+            fetchJurusan();
+        }
+    </script>
 @endpush

@@ -131,6 +131,10 @@ public function storeJurusan(Request $request)
             return response()->json(['message' => 'Data tidak ditemukan'], 404);
         }
 
+            if ($ta->jurusan()->count() > 0) {
+                return response()->json(['message' => 'Hapus Gagal: Tahun Ajaran masih digunakan di ' . $ta->jurusan()->count() . ' jurusan.'], 409);
+            }
+
         // 2. Eksekusi Hapus
         // Catatan: Karena di migrasi Kelas Anda menggunakan onDelete('cascade'), 
         // maka menghapus TA ini juga akan menghapus Kelas yang terkait.
@@ -304,54 +308,57 @@ public function deletePetugas($kode) {
     // PENGATURAN
     // ==========================================
     // Tambahkan fungsi untuk mengambil dan mengupdate pengaturan
-// app/Http/Controllers/Api/MasterDataController.php
+    // app/Http/Controllers/Api/MasterDataController.php
 
-public function getPengaturan() {
-    try {
-        // Mengambil semua data dan mengubahnya jadi format Key => Value
-        $data = \App\Models\Pengaturan::all();
-        
-        // Tambahkan URL lengkap untuk logo agar bisa tampil di frontend
-        if (isset($data['logo_website']) && $data['logo_website']) {
-            $data['logo_website'] = url($data['logo_website']);
+    public function getPengaturan()
+    {
+        try {
+            $data = \App\Models\Pengaturan::all();
+            return response()->json($data);
+        } catch (\Exception $e) {
+            return response()->json(['message' => $e->getMessage()], 500);
         }
-
-        return response()->json($data);
-    } catch (\Exception $e) {
-        return response()->json(['message' => $e->getMessage()], 500);
     }
-}
 
-// app/Http/Controllers/Api/MasterDataController.php
 
-public function updatePengaturan(Request $request)
-{
-    try {
-        $inputs = $request->all();
+    // app/Http/Controllers/Api/MasterDataController.php
 
-        // 1. Logika Unggah Logo
-        if ($request->hasFile('logo')) {
-            $file = $request->file('logo');
-            // Simpan di folder: storage/app/public/logo
-            $path = $file->store('public/logo'); 
-            // Ubah path menjadi: storage/logo/namafile.png agar bisa diakses publik
-            $inputs['logo_website'] = str_replace('public/', 'storage/', $path);
-        }
+    public function updatePengaturan(Request $request)
+    {
+        try {
 
-        // 2. Simpan/Update ke Database
-        foreach ($inputs as $key => $value) {
-            if ($key !== 'logo') { // Jangan simpan file mentah ke tabel
+            // SIMPAN LOGO
+            if ($request->hasFile('logo_website')) {
+                $file = $request->file('logo_website');
+                $path = $file->store('public/logo');
                 \App\Models\Pengaturan::updateOrCreate(
-                    ['nama_pengaturan' => $key],
-                    ['nilai' => $value]
+                    ['nama_pengaturan' => 'logo_website'],
+                    ['nilai' => str_replace('public/', 'storage/', $path)]
                 );
             }
-        }
 
-        return response()->json(['message' => 'Berhasil diperbarui']);
-    } catch (\Exception $e) {
-        // Gunakan -> untuk memanggil method di dalam objek
-        return response()->json(['message' => $e->getMessage()], 500);
+            // SIMPAN FIELD LAIN
+            $fields = [
+                'nama_website',
+                'email_website',
+                'no_telp',
+                'alamat',
+                'tipe_potongan',
+                'jumlah_potongan'
+            ];
+
+            foreach ($fields as $field) {
+                if ($request->has($field)) {
+                    \App\Models\Pengaturan::updateOrCreate(
+                        ['nama_pengaturan' => $field],
+                        ['nilai' => $request->input($field)]
+                    );
+                }
+            }
+
+            return response()->json(['message' => 'Berhasil diperbarui']);
+        } catch (\Exception $e) {
+            return response()->json(['message' => $e->getMessage()], 500);
+        }
     }
-}
 }

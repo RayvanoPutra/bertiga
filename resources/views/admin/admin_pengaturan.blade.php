@@ -1,7 +1,7 @@
 @extends('layouts.admin')
 
 @section('title', 'Pengaturan Sistem')
-@section('header_title', 'Konfigurasi Website & Biaya Admin')
+@section('header_title', 'Pengaturan Sistem')
 
 @section('content')
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -224,7 +224,7 @@
 
             const logoFile = document.getElementById('input_logo').files[0];
             if (logoFile) {
-                formData.append('logo', logoFile);
+                formData.append('logo_website', logoFile);
             }
 
             try {

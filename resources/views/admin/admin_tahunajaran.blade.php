@@ -281,7 +281,7 @@
                     Swal.fire('Terhapus!', 'Data berhasil dihapus.', 'success');
                     fetchTA();
                 } else {
-                    Swal.fire('Gagal!', 'Gagal menghapus data.', 'error');
+                    Swal.fire('Gagal!', 'Gagal menghapus data karena masih ada nasabah.', 'error');
                 }
             } catch (error) {
                 Swal.fire('Error!', 'Koneksi bermasalah', 'error');
